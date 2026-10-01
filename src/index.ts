@@ -32,6 +32,28 @@ export type {
   GateVerificationResult,
   RealityGrant,
 } from "./gate/types.js";
+export {
+  DEFAULT_POLICY,
+  NbgMemoryPods,
+  botBubbleId,
+  taskBubbleId,
+} from "./memory/pods.js";
+export type { NbgMemoryPodsOptions } from "./memory/pods.js";
+export { MemoryMemoryStore } from "./memory/store.js";
+export type { MemoryStore } from "./memory/store.js";
+export type {
+  MemoryCompactionResult,
+  MemoryEscalationPacket,
+  MemoryEscalationRecord,
+  MemoryPolicy,
+  MemoryProvenance,
+  MemoryRecord,
+  MemoryRetrieveOptions,
+  MemoryScope,
+  MemorySource,
+  MemorySourceKind,
+  MemoryWriteInput,
+} from "./memory/types.js";
 export { DryRunProvider } from "./providers/dry-run.js";
 export { FallbackProvider } from "./providers/fallback.js";
 export { OllamaProvider } from "./providers/ollama.js";
