@@ -9,7 +9,12 @@ export type VesselStage =
   | "verify"
   | "ledger";
 
-export type ReceiptStage = VesselStage | "tool" | "gate" | "memory";
+export type ReceiptStage =
+  | VesselStage
+  | "tool"
+  | "gate"
+  | "memory"
+  | "message";
 
 export interface PhiBotManifest {
   id: string;

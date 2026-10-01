@@ -54,11 +54,14 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 5 - CommonLine
 
-- [ ] typed inter-bot messages
-- [ ] sender identity
-- [ ] reply / handoff receipts
-- [ ] temporary bot groups
-- [ ] Vessie coordinator channel
+- [x] typed inter-bot messages
+- [x] manifest-derived sender identity
+- [x] reply thread linkage
+- [x] typed handoffs with NBG packets
+- [x] message receipts
+- [x] temporary bot groups with expiry
+- [x] Vessie coordinator channel
+- [x] pluggable transport and group-store seams
 
 ## Rung 6 - PhiOS service
 
@@ -69,6 +72,7 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 - [ ] governed bot spawning
 - [ ] durable replay store / platform key custody
 - [ ] durable NBG memory store
+- [ ] durable CommonLine transport
 
 ## Rung 7 - PhiBot spawning
 
