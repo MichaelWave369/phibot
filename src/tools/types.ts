@@ -1,4 +1,5 @@
-import type { AuthorityClass, LedgerReceipt, PhiBotManifest } from "../core/types.js";
+import type { LedgerReceipt, PhiBotManifest } from "../core/types.js";
+import type { GateRequest, RealityGrant } from "../gate/types.js";
 
 export interface ToolExecutionContext {
   botId: string;
@@ -9,7 +10,7 @@ export interface ToolExecutionContext {
 export interface ToolCapability<TInput = unknown, TOutput = unknown> {
   id: string;
   description: string;
-  actionClass: AuthorityClass;
+  actionClass: "read" | "propose" | "write" | "deploy";
   external: boolean;
   validate(input: unknown): TInput;
   execute(input: TInput, context: ToolExecutionContext): Promise<TOutput>;
@@ -18,6 +19,7 @@ export interface ToolCapability<TInput = unknown, TOutput = unknown> {
 export interface ToolExecutionRequest {
   capability: string;
   input: unknown;
+  grant?: RealityGrant;
 }
 
 export interface ToolExecutionResult<TOutput = unknown> {
@@ -25,6 +27,7 @@ export interface ToolExecutionResult<TOutput = unknown> {
   capability: string;
   output?: TOutput;
   error?: string;
+  gateRequest?: GateRequest;
   receipt: LedgerReceipt;
 }
 

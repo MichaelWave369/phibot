@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { evaluateManifestAuthority } from "../core/authority.js";
 import type { Ledger } from "../core/ledger.js";
 import type { LedgerReceipt, PhiBotManifest } from "../core/types.js";
+import type { RealityGate } from "../gate/reality-gate.js";
 import { ToolCapabilityRegistry } from "./registry.js";
 import { ToolSandbox } from "./sandbox.js";
 import type {
@@ -21,6 +22,7 @@ export class ToolExecutor {
     private readonly registry: ToolCapabilityRegistry,
     private readonly ledger: Ledger,
     options: ToolExecutorOptions = {},
+    private readonly realityGate?: RealityGate,
   ) {
     this.sandbox = new ToolSandbox({
       ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
@@ -87,26 +89,113 @@ export class ToolExecutor {
     }
 
     const authority = evaluateManifestAuthority(manifest, capability.actionClass);
+    let gateGrantId: string | undefined;
+    let gateRequestId: string | undefined;
 
     if (!authority.allowed) {
-      const receipt = await record(
-        authority.gated ? "escalate" : "blocked",
-        authority.reason,
-        {
+      if (!authority.gated) {
+        const receipt = await record("blocked", authority.reason, {
           tool: {
             capability: capability.id,
             actionClass: capability.actionClass,
             external: capability.external,
-            reason: authority.gated ? "reality_gate_required" : "authority_denied",
+            reason: "authority_denied",
           },
+        });
+        return {
+          status: "denied",
+          capability: capability.id,
+          error: authority.reason,
+          receipt,
+        };
+      }
+
+      if (!this.realityGate) {
+        const receipt = await record("escalate", authority.reason, {
+          tool: {
+            capability: capability.id,
+            actionClass: capability.actionClass,
+            external: capability.external,
+            reason: "reality_gate_not_configured",
+          },
+        });
+        return {
+          status: "gated",
+          capability: capability.id,
+          error: authority.reason,
+          receipt,
+        };
+      }
+
+      if (!request.grant) {
+        const gateRequest = await this.realityGate.createRequest({
+          manifest,
+          runId,
+          capability: capability.id,
+          actionClass: capability.actionClass,
+          input: request.input,
+        });
+        const receipt = await record(
+          "escalate",
+          `Reality Gate approval required for ${capability.id}.`,
+          {
+            tool: {
+              capability: capability.id,
+              actionClass: capability.actionClass,
+              external: capability.external,
+              reason: "reality_gate_required",
+              gateRequestId: gateRequest.requestId,
+              inputDigest: gateRequest.inputDigest,
+            },
+          },
+        );
+        return {
+          status: "gated",
+          capability: capability.id,
+          error: authority.reason,
+          gateRequest,
+          receipt,
+        };
+      }
+
+      const verification = await this.realityGate.verifyAndConsume(
+        request.grant,
+        {
+          runId,
+          botId: manifest.id,
+          capability: capability.id,
+          actionClass: capability.actionClass,
+          input: request.input,
         },
+        manifest.version,
       );
-      return {
-        status: authority.gated ? "gated" : "denied",
-        capability: capability.id,
-        error: authority.reason,
-        receipt,
-      };
+
+      if (!verification.valid) {
+        const receipt = await record(
+          "blocked",
+          `Reality Gate grant rejected for ${capability.id}.`,
+          {
+            tool: {
+              capability: capability.id,
+              actionClass: capability.actionClass,
+              external: capability.external,
+              reason: "grant_rejected",
+              grantId: verification.grantId,
+              gateRequestId: verification.requestId,
+              detail: verification.reason,
+            },
+          },
+        );
+        return {
+          status: "denied",
+          capability: capability.id,
+          error: verification.reason,
+          receipt,
+        };
+      }
+
+      gateGrantId = verification.grantId;
+      gateRequestId = verification.requestId;
     }
 
     try {
@@ -128,6 +217,8 @@ export class ToolExecutor {
             actionClass: capability.actionClass,
             external: capability.external,
             durationMs,
+            ...(gateGrantId === undefined ? {} : { gateGrantId }),
+            ...(gateRequestId === undefined ? {} : { gateRequestId }),
           },
         },
       );
@@ -150,6 +241,8 @@ export class ToolExecutor {
             external: capability.external,
             reason: "execution_failed",
             error: message,
+            ...(gateGrantId === undefined ? {} : { gateGrantId }),
+            ...(gateRequestId === undefined ? {} : { gateRequestId }),
           },
         },
       );

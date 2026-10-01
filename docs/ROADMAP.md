@@ -33,11 +33,12 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 3 - Reality Gate
 
-- [ ] gate request object
-- [ ] approve / deny / narrow grant
-- [ ] signed short-lived grants
-- [ ] replay protection
-- [ ] gate receipt chain
+- [x] gate request object
+- [x] approve / deny / narrow grant decisions
+- [x] signed short-lived grants
+- [x] exact bot/run/capability/class/input binding
+- [x] one-use replay protection
+- [x] gate receipt chain
 
 ## Rung 4 - NBG memory pods
 
@@ -63,6 +64,7 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 - [ ] process/resource budgets
 - [ ] UI status events
 - [ ] governed bot spawning
+- [ ] durable replay store / platform key custody
 
 ## Rung 7 - PhiBot spawning
 

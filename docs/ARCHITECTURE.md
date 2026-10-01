@@ -4,8 +4,6 @@
 
 PhiBot is the governed micro-agent layer of the Phi ecosystem. A PhiBot should be small enough to understand, replace, audit, and route cheaply.
 
-The architecture starts from one rule:
-
 > Capability is not authority.
 
 ## Runtime model
@@ -17,7 +15,6 @@ The architecture starts from one rule:
           +---------+---------+
           |         |         |
        PhiBot    PhiBot    PhiBot
-        Scout     Build     Memory
           |         |         |
           +------ CommonLine -+
                     |
@@ -29,73 +26,47 @@ The architecture starts from one rule:
 Inside one PhiBot:
 
 ```text
-manifest
-   |
-runtime -> provider adapter -> provider registry -> Ollama
-   |                              |
-   |                              +--> deterministic fallback
-   |
-tool request -> capability registry
-                    |
-             registry-owned
-              action class
-                    |
-                authority
-               /    |    \
-           execute gate  deny
+provider -> propose
+              |
+         capability registry
+              |
+       registry action class
+              |
+        manifest authority
+         /      |       \
+      allow    gate     deny
+        |       |
+        |    GateRequest
+        |       |
+        |   decision
+        |    / | \
+        | deny | narrow
+        |      |
+        |   signed grant
+        |      |
+        +-- verification
               |
            sandbox
               |
             ledger
 ```
 
-## Five-stage vessel loop
-
-Every reasoning run follows:
-
-1. **observe**
-2. **interpret**
-3. **propose**
-4. **verify**
-5. **ledger**
-
-Tool execution is separately receipted as `stage: "tool"`.
-
 ## Authority
 
-The manifest contains four authority classes:
-
-- `read`
-- `propose`
-- `write`
-- `deploy`
-
-Each is `true`, `false`, or `"gated"`.
-
-For registered tools, the **registry owns the action class**. Model output cannot override it.
-
-## Provider seam
-
-Providers supply structured candidate reasoning. They do not grant tool or external-action authority.
-
-## Tool seam
-
-A `ToolCapabilityRegistry` stores typed descriptors. `ToolExecutor` requires both declaration in the bot manifest and registration in the local registry. Unknown tools are denied by default.
-
-`ToolSandbox` applies a timeout, cancellation signal, cloned input, and scoped execution context. It is a cooperative runtime boundary, not OS isolation. PhiOS process isolation belongs to a later rung.
-
-## Ledger
-
-Receipts use `phibot.receipt.v1` and remain provider-independent. Provider and tool metadata are attached to receipts rather than trusted as hidden runtime state.
-
-## Memory seam
-
-NBG-backed memory remains deferred until its interface explicitly covers scope, provenance, promotion, expiry, cross-bot transfer, and contamination controls.
-
-## CommonLine seam
-
-Inter-bot messages should become typed events rather than hidden prompt injection.
+The manifest contains `read`, `propose`, `write`, and `deploy`. The tool registry owns the action class for every registered capability.
 
 ## Reality Gate
 
-A gated action stops before execution. Rung 3 will add explicit approval objects, narrowed grants, signatures, expiry, and replay protection.
+A gated authority class does not execute directly.
+
+The gate creates a request bound to the exact tool input digest. An approval produces a short-lived, signed, one-use grant. Verification checks signature, expiry, bot, run, capability, action class, input digest, and replay status before execution.
+
+This means approval cannot silently become standing authority.
+
+## Ledger
+
+Reasoning, provider, gate, and tool events share the append-only receipt schema. Gate request, decision, verification, and tool execution IDs form an auditable chain.
+
+## Security boundary
+
+The current tool sandbox is cooperative and the default replay store is process-local. PhiOS service mode is expected to supply stronger process isolation, key custody, and durable replay state.

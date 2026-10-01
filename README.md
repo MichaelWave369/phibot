@@ -2,7 +2,7 @@
 
 **PhiBot** is a governed micro-agent runtime inspired by the Vessie / PhiVessel architecture.
 
-Instead of cloning one giant agent repeatedly, PhiBot is built around small purpose-specific workers with explicit identity, bounded memory, declared capabilities, authority limits, provider receipts, typed tool execution, and an append-only ledger.
+Instead of cloning one giant agent repeatedly, PhiBot is built around small purpose-specific workers with explicit identity, bounded memory, declared capabilities, authority limits, provider receipts, typed tool execution, a cryptographic Reality Gate, and an append-only ledger.
 
 ## Core loop
 
@@ -28,49 +28,45 @@ observe -> interpret -> propose -> verify -> ledger
 - local Ollama provider with deterministic fallback
 - provider token / latency receipts
 - typed tool capability registry
-- per-capability argument validation
 - registry-owned action classes
 - deny-by-default unknown tools
-- bounded tool sandbox with timeout / cancellation signal
-- receipted tool execution
-- example local utilities
+- bounded tool sandbox
+- cryptographic Reality Gate requests and grants
+- approve / deny / narrow decisions
+- short-lived one-use grants
+- grant binding to bot, run, capability, action class, and exact input digest
+- replay protection
+- gate + tool receipt chain
 - tests and GitHub Actions CI
 
-## Quick start
+## Reality Gate flow
 
-Requires Node.js 22+.
-
-```bash
-npm install
-npm test
-npm run phibot -- bots/examples/scout.phibot.json "map the repository"
+```text
+gated tool call
+      |
+  gate request
+      |
+ approve / deny / narrow
+      |
+ signed one-use grant
+      |
+ verify signature + expiry + binding + replay
+      |
+    execute
+      |
+ gate + tool receipts
 ```
 
-## Local Ollama PhiBot
+A grant is not general permission. It is bound to the original bot, run ID, capability, authority class, and exact canonical tool-input SHA-256 digest.
 
-```bash
-ollama serve
-ollama pull qwen3:4b
-npm run phibot -- bots/examples/local-scout.phibot.json "inspect this task and propose the safest next step"
-```
-
-## Governed tool execution
-
-The model never gets to define a registered tool's authority class. The registry does.
-
-```bash
-npm run tool -- bots/examples/utility.phibot.json utility.echo '{"text":"hello PhiBot"}'
-npm run tool -- bots/examples/utility.phibot.json math.add '{"values":[3,6,9]}'
-```
-
-Every attempt is receipted, including denied, gated, invalid, timed-out, and successful calls.
-
-An undeclared or unknown capability is denied by default.
+See [docs/REALITY_GATE.md](docs/REALITY_GATE.md) for the contract.
 
 ## Design law
 
 > Capability is not authority.
 
-Knowing how to call a tool does not grant permission to use it.
+And now:
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MANIFEST.md](docs/MANIFEST.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/TOOLS.md](docs/TOOLS.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+> Approval is not permanent authority.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/TOOLS.md](docs/TOOLS.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/REALITY_GATE.md](docs/REALITY_GATE.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
