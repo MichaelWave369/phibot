@@ -10,7 +10,7 @@ async function main(): Promise<void> {
 
   if (!manifestArg || !capabilityArg || inputArg === undefined) {
     console.error(
-      'Usage: npm run tool -- <manifest.json> <capability> '<json-input>'',
+      "Usage: npm run tool -- <manifest.json> <capability> '<json-input>'",
     );
     process.exitCode = 1;
     return;

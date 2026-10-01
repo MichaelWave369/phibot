@@ -30,7 +30,7 @@ export class ToolExecutor {
   async execute(
     manifest: PhiBotManifest,
     request: ToolExecutionRequest,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<ToolExecutionResult> {
     const capability = this.registry.get(request.capability);
 
