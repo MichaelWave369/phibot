@@ -1,0 +1,26 @@
+{
+  "id": "local-scoutbot",
+  "name": "Local ScoutBot",
+  "version": "0.2.0",
+  "role": "research_scout",
+  "description": "Uses a local Ollama model to inspect bounded tasks and propose safe next steps.",
+  "model": {
+    "provider": "ollama",
+    "name": "qwen3:4b"
+  },
+  "memory": {
+    "scope": "task",
+    "maxDepth": 2
+  },
+  "capabilities": ["research.read", "repo.read"],
+  "authority": {
+    "read": true,
+    "propose": true,
+    "write": false,
+    "deploy": false
+  },
+  "escalation": {
+    "target": "vessie",
+    "confidenceBelow": 0.7
+  }
+}

@@ -16,11 +16,11 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 1 - Provider interfaces
 
-- [ ] provider registry
-- [ ] Ollama adapter
-- [ ] structured provider result contract
-- [ ] token / latency / resource receipts
-- [ ] deterministic provider fallback
+- [x] provider registry
+- [x] Ollama adapter
+- [x] structured provider result contract
+- [x] token / latency / resource receipts
+- [x] deterministic provider fallback
 
 ## Rung 2 - Tool capability registry
 

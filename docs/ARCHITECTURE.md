@@ -28,6 +28,18 @@ A provider or tool may make an operation technically possible. The manifest deci
           NBG / Ledger / Gate
 ```
 
+Inside one PhiBot:
+
+```text
+manifest
+   |
+runtime -> provider-backed adapter -> provider registry -> Ollama
+   |                                  |
+authority                              +------> deterministic fallback
+   |
+ledger
+```
+
 ## Five-stage vessel loop
 
 Every run follows the same semantic seam:
@@ -58,9 +70,21 @@ The current bootstrap uses `write` as the coarse gate for external actions. Late
 
 Receipts use `phibot.receipt.v1` and are append-only NDJSON by default. They remain provider-independent.
 
+Provider-backed runs attach latency, token usage, provider/model identity, and fallback state to stage receipts. Final receipts contain aggregate provider usage.
+
 ## Provider seam
 
-`PhiBotAdapter` is the model/provider seam. The first adapter is deterministic and performs no external work. Future adapters can bind Ollama, Vessie, hosted models, or PhiOS services without changing the runtime contract.
+The runtime does not talk to Ollama directly.
+
+`ProviderBackedAdapter` translates the fixed vessel stages into a provider request. `ProviderRegistry` resolves the manifest's provider name. Providers return a structured completion that is validated before becoming a stage result.
+
+Rung 1 includes:
+
+- `dry-run`: deterministic, zero-network provider
+- `ollama`: local `/api/chat` provider
+- `FallbackProvider`: catches provider availability failures and records deterministic fallback
+
+This makes model choice replaceable without letting model choice bypass governance.
 
 ## Memory seam
 
