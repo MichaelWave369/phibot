@@ -2,7 +2,7 @@
 
 **PhiBot** is a governed micro-agent runtime inspired by the Vessie / PhiVessel architecture.
 
-Instead of cloning one giant agent repeatedly, PhiBot is built around small purpose-specific workers with explicit identity, bounded memory, declared capabilities, authority limits, escalation rules, provider receipts, and an append-only ledger.
+Instead of cloning one giant agent repeatedly, PhiBot is built around small purpose-specific workers with explicit identity, bounded memory, declared capabilities, authority limits, provider receipts, typed tool execution, and an append-only ledger.
 
 ## Core loop
 
@@ -22,22 +22,19 @@ observe -> interpret -> propose -> verify -> ledger
 
 ## Current capabilities
 
-Rung 0 established the governed runtime. Rung 1 adds real model-provider plumbing:
-
-- typed PhiBot manifest contract
+- typed PhiBot manifests
 - fixed five-stage vessel loop
-- capability and authority declarations
-- external-action authority gate
-- append-only NDJSON receipts
 - provider registry
-- deterministic provider
-- local Ollama provider
-- automatic deterministic fallback when a configured provider is unavailable
-- structured provider result validation
-- per-stage token / latency / provider receipts
-- example dry-run and local Ollama bots
-- CLI runner
-- unit tests and GitHub Actions CI
+- local Ollama provider with deterministic fallback
+- provider token / latency receipts
+- typed tool capability registry
+- per-capability argument validation
+- registry-owned action classes
+- deny-by-default unknown tools
+- bounded tool sandbox with timeout / cancellation signal
+- receipted tool execution
+- example local utilities
+- tests and GitHub Actions CI
 
 ## Quick start
 
@@ -49,11 +46,7 @@ npm test
 npm run phibot -- bots/examples/scout.phibot.json "map the repository"
 ```
 
-A run writes receipts to `.phibot/ledger.ndjson` by default.
-
-## Run a local Ollama-backed PhiBot
-
-Start Ollama and make sure the manifest's model exists:
+## Local Ollama PhiBot
 
 ```bash
 ollama serve
@@ -61,18 +54,23 @@ ollama pull qwen3:4b
 npm run phibot -- bots/examples/local-scout.phibot.json "inspect this task and propose the safest next step"
 ```
 
-The default Ollama endpoint is `http://127.0.0.1:11434`. Override it with `OLLAMA_HOST`.
+## Governed tool execution
 
-By default, provider failures fall back to the deterministic `dry-run` provider. The receipt explicitly records that fallback and its reason. Disable fallback when testing failure behavior:
+The model never gets to define a registered tool's authority class. The registry does.
 
 ```bash
-PHIBOT_PROVIDER_FALLBACK=none npm run phibot -- bots/examples/local-scout.phibot.json "test strict provider mode"
+npm run tool -- bots/examples/utility.phibot.json utility.echo '{"text":"hello PhiBot"}'
+npm run tool -- bots/examples/utility.phibot.json math.add '{"values":[3,6,9]}'
 ```
+
+Every attempt is receipted, including denied, gated, invalid, timed-out, and successful calls.
+
+An undeclared or unknown capability is denied by default.
 
 ## Design law
 
 > Capability is not authority.
 
-A bot may know how to perform an operation while still lacking permission to perform it. Provider choice does not change that boundary.
+Knowing how to call a tool does not grant permission to use it.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MANIFEST.md](docs/MANIFEST.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MANIFEST.md](docs/MANIFEST.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/TOOLS.md](docs/TOOLS.md), and [docs/ROADMAP.md](docs/ROADMAP.md).

@@ -1,6 +1,6 @@
 {
   "name": "@phi/phibot",
-  "version": "0.2.0-alpha.0",
+  "version": "0.3.0-alpha.0",
   "private": true,
   "description": "Governed purpose-built micro-agent runtime for the Phi ecosystem",
   "type": "module",
@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/test/*.test.js",
-    "phibot": "npm run build --silent && node dist/src/cli.js"
+    "phibot": "npm run build --silent && node dist/src/cli.js",
+    "tool": "npm run build --silent && node dist/src/tool-cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

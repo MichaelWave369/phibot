@@ -1,11 +1,15 @@
 export type AuthorityMode = boolean | "gated";
 
+export type AuthorityClass = "read" | "propose" | "write" | "deploy";
+
 export type VesselStage =
   | "observe"
   | "interpret"
   | "propose"
   | "verify"
   | "ledger";
+
+export type ReceiptStage = VesselStage | "tool";
 
 export interface PhiBotManifest {
   id: string;
@@ -22,12 +26,7 @@ export interface PhiBotManifest {
     maxDepth: number;
   };
   capabilities: string[];
-  authority: {
-    read: AuthorityMode;
-    propose: AuthorityMode;
-    write: AuthorityMode;
-    deploy: AuthorityMode;
-  };
+  authority: Record<AuthorityClass, AuthorityMode>;
   escalation: {
     target: string;
     confidenceBelow: number;
@@ -52,15 +51,19 @@ export interface ProviderTrace {
   fallbackReason?: string;
 }
 
+export interface ProposedAction {
+  capability: string;
+  external: boolean;
+  description: string;
+  authority?: AuthorityClass;
+  input?: unknown;
+}
+
 export interface StageResult {
   stage: Exclude<VesselStage, "ledger">;
   summary: string;
   confidence: number;
-  action?: {
-    capability: string;
-    external: boolean;
-    description: string;
-  };
+  action?: ProposedAction;
   provider?: ProviderTrace;
 }
 
@@ -69,7 +72,7 @@ export interface LedgerReceipt {
   runId: string;
   botId: string;
   botVersion: string;
-  stage: VesselStage;
+  stage: ReceiptStage;
   timestamp: string;
   status: "ok" | "blocked" | "escalate";
   summary: string;

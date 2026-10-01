@@ -1,0 +1,26 @@
+{
+  "id": "utilitybot",
+  "name": "UtilityBot",
+  "version": "0.3.0",
+  "role": "bounded_utility",
+  "description": "Demonstrates typed, governed local tool execution.",
+  "model": {
+    "provider": "dry-run",
+    "name": "deterministic"
+  },
+  "memory": {
+    "scope": "task",
+    "maxDepth": 1
+  },
+  "capabilities": ["utility.echo", "math.add"],
+  "authority": {
+    "read": true,
+    "propose": true,
+    "write": false,
+    "deploy": false
+  },
+  "escalation": {
+    "target": "vessie",
+    "confidenceBelow": 0.7
+  }
+}

@@ -1,7 +1,11 @@
 export { DryRunAdapter } from "./adapters/dry-run.js";
 export type { PhiBotAdapter } from "./adapters/dry-run.js";
 export { ProviderBackedAdapter, parseProviderPayload } from "./adapters/provider-backed.js";
-export { evaluateAuthority } from "./core/authority.js";
+export {
+  evaluateAuthority,
+  evaluateAuthorityMode,
+  evaluateManifestAuthority,
+} from "./core/authority.js";
 export { FileLedger, MemoryLedger } from "./core/ledger.js";
 export type { Ledger } from "./core/ledger.js";
 export { loadManifest, validateManifest } from "./core/manifest.js";
@@ -25,12 +29,32 @@ export type {
   ProviderMetrics,
   ProviderRequest,
 } from "./providers/types.js";
+export {
+  addCapability,
+  createBuiltinToolRegistry,
+  echoCapability,
+} from "./tools/builtins.js";
+export { ToolExecutor } from "./tools/executor.js";
+export { ToolCapabilityRegistry } from "./tools/registry.js";
+export { ToolSandbox } from "./tools/sandbox.js";
 export type {
+  AnyToolCapability,
+  ToolCapability,
+  ToolExecutionContext,
+  ToolExecutionEnvelope,
+  ToolExecutionRequest,
+  ToolExecutionResult,
+  ToolExecutorOptions,
+} from "./tools/types.js";
+export type {
+  AuthorityClass,
   AuthorityMode,
   BotInput,
   LedgerReceipt,
   PhiBotManifest,
+  ProposedAction,
   ProviderTrace,
+  ReceiptStage,
   RunResult,
   StageResult,
   VesselStage,

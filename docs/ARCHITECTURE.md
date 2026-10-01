@@ -8,8 +8,6 @@ The architecture starts from one rule:
 
 > Capability is not authority.
 
-A provider or tool may make an operation technically possible. The manifest decides whether the bot is allowed to request or perform it.
-
 ## Runtime model
 
 ```text
@@ -33,67 +31,71 @@ Inside one PhiBot:
 ```text
 manifest
    |
-runtime -> provider-backed adapter -> provider registry -> Ollama
-   |                                  |
-authority                              +------> deterministic fallback
+runtime -> provider adapter -> provider registry -> Ollama
+   |                              |
+   |                              +--> deterministic fallback
    |
-ledger
+tool request -> capability registry
+                    |
+             registry-owned
+              action class
+                    |
+                authority
+               /    |    \
+           execute gate  deny
+              |
+           sandbox
+              |
+            ledger
 ```
 
 ## Five-stage vessel loop
 
-Every run follows the same semantic seam:
+Every reasoning run follows:
 
-1. **observe** - collect bounded task state
-2. **interpret** - map observations to role and capability
-3. **propose** - form a candidate action or answer
-4. **verify** - check the candidate against evidence and constraints
-5. **ledger** - emit a durable receipt
+1. **observe**
+2. **interpret**
+3. **propose**
+4. **verify**
+5. **ledger**
 
-Keeping the seam fixed lets providers change without changing governance.
-
-## Manifest boundary
-
-A manifest declares stable identity, role, provider/model binding, memory scope, capabilities, authority, and escalation policy.
-
-Manifests are configuration, not proof. Runtime checks still enforce boundaries.
+Tool execution is separately receipted as `stage: "tool"`.
 
 ## Authority
 
-The bootstrap defines four authority dimensions: `read`, `propose`, `write`, and `deploy`.
+The manifest contains four authority classes:
 
-Each may be `true`, `false`, or `"gated"`.
+- `read`
+- `propose`
+- `write`
+- `deploy`
 
-The current bootstrap uses `write` as the coarse gate for external actions. Later rungs replace this with explicit action classes and signed grants.
+Each is `true`, `false`, or `"gated"`.
 
-## Ledger
-
-Receipts use `phibot.receipt.v1` and are append-only NDJSON by default. They remain provider-independent.
-
-Provider-backed runs attach latency, token usage, provider/model identity, and fallback state to stage receipts. Final receipts contain aggregate provider usage.
+For registered tools, the **registry owns the action class**. Model output cannot override it.
 
 ## Provider seam
 
-The runtime does not talk to Ollama directly.
+Providers supply structured candidate reasoning. They do not grant tool or external-action authority.
 
-`ProviderBackedAdapter` translates the fixed vessel stages into a provider request. `ProviderRegistry` resolves the manifest's provider name. Providers return a structured completion that is validated before becoming a stage result.
+## Tool seam
 
-Rung 1 includes:
+A `ToolCapabilityRegistry` stores typed descriptors. `ToolExecutor` requires both declaration in the bot manifest and registration in the local registry. Unknown tools are denied by default.
 
-- `dry-run`: deterministic, zero-network provider
-- `ollama`: local `/api/chat` provider
-- `FallbackProvider`: catches provider availability failures and records deterministic fallback
+`ToolSandbox` applies a timeout, cancellation signal, cloned input, and scoped execution context. It is a cooperative runtime boundary, not OS isolation. PhiOS process isolation belongs to a later rung.
 
-This makes model choice replaceable without letting model choice bypass governance.
+## Ledger
+
+Receipts use `phibot.receipt.v1` and remain provider-independent. Provider and tool metadata are attached to receipts rather than trusted as hidden runtime state.
 
 ## Memory seam
 
-The bootstrap stores only manifest-level memory policy. NBG-backed memory is deferred until its interface explicitly covers scope, provenance, promotion, expiry, cross-bot transfer, and contamination controls.
+NBG-backed memory remains deferred until its interface explicitly covers scope, provenance, promotion, expiry, cross-bot transfer, and contamination controls.
 
 ## CommonLine seam
 
-Inter-bot messages should become typed events rather than hidden prompt injection. CommonLine integration belongs behind a transport interface with sender identity, message type, authority context, and receipt linkage.
+Inter-bot messages should become typed events rather than hidden prompt injection.
 
 ## Reality Gate
 
-A gated external action stops before execution and returns an escalation receipt. A later Reality Gate service can turn a gate request into a signed approval, denial, or narrowed grant.
+A gated action stops before execution. Rung 3 will add explicit approval objects, narrowed grants, signatures, expiry, and replay protection.

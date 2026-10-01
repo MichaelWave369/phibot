@@ -1,8 +1,10 @@
 import type { PhiBotAdapter } from "./dry-run.js";
 import type {
+  AuthorityClass,
   BotInput,
   PhiBotManifest,
   ProviderTrace,
+  ProposedAction,
   StageResult,
   VesselStage,
 } from "../core/types.js";
@@ -13,12 +15,15 @@ type ExecutableStage = Exclude<VesselStage, "ledger">;
 interface ProviderPayload {
   summary: string;
   confidence: number;
-  action?: {
-    capability: string;
-    external: boolean;
-    description: string;
-  };
+  action?: ProposedAction;
 }
+
+const AUTHORITY_CLASSES = new Set<AuthorityClass>([
+  "read",
+  "propose",
+  "write",
+  "deploy",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -47,7 +52,7 @@ function parseProviderPayload(content: string): ProviderPayload {
     throw new Error("Provider contract violation: confidence must be between 0 and 1.");
   }
 
-  let action: ProviderPayload["action"];
+  let action: ProposedAction | undefined;
   if (value.action !== undefined && value.action !== null) {
     if (
       !isRecord(value.action) ||
@@ -58,10 +63,23 @@ function parseProviderPayload(content: string): ProviderPayload {
       throw new Error("Provider contract violation: action has an invalid shape.");
     }
 
+    let authority: AuthorityClass | undefined;
+    if (value.action.authority !== undefined) {
+      if (
+        typeof value.action.authority !== "string" ||
+        !AUTHORITY_CLASSES.has(value.action.authority as AuthorityClass)
+      ) {
+        throw new Error("Provider contract violation: action.authority is invalid.");
+      }
+      authority = value.action.authority as AuthorityClass;
+    }
+
     action = {
       capability: value.action.capability,
       external: value.action.external,
       description: value.action.description,
+      ...(authority === undefined ? {} : { authority }),
+      ...(value.action.input === undefined ? {} : { input: value.action.input }),
     };
   }
 
