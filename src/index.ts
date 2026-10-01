@@ -10,6 +10,28 @@ export { FileLedger, MemoryLedger } from "./core/ledger.js";
 export type { Ledger } from "./core/ledger.js";
 export { loadManifest, validateManifest } from "./core/manifest.js";
 export { PhiBotRuntime } from "./core/runtime.js";
+export {
+  canonicalize,
+  digestInput,
+  signGrant,
+  verifyGrantSignature,
+} from "./gate/crypto.js";
+export { MemoryReplayStore } from "./gate/replay.js";
+export type { ReplayStore } from "./gate/replay.js";
+export { RealityGate } from "./gate/reality-gate.js";
+export type {
+  CreateGateRequestInput,
+  RealityGateOptions,
+} from "./gate/reality-gate.js";
+export type {
+  GateDecision,
+  GateDecisionInput,
+  GateDecisionOutcome,
+  GateRequest,
+  GateVerificationContext,
+  GateVerificationResult,
+  RealityGrant,
+} from "./gate/types.js";
 export { DryRunProvider } from "./providers/dry-run.js";
 export { FallbackProvider } from "./providers/fallback.js";
 export { OllamaProvider } from "./providers/ollama.js";
