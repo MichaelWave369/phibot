@@ -178,7 +178,7 @@ export class NbgMemoryPods {
     manifest: PhiBotManifest,
     taskId: string,
     input: MemoryWriteInput,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<MemoryRecord> {
     if (!taskId.trim()) throw new Error("taskId cannot be empty.");
 
@@ -206,7 +206,7 @@ export class NbgMemoryPods {
   async rememberBot(
     manifest: PhiBotManifest,
     input: MemoryWriteInput,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<MemoryRecord> {
     const record = this.buildRecord(manifest, "bot", undefined, input);
     await this.store.put(record);
@@ -233,7 +233,7 @@ export class NbgMemoryPods {
     manifest: PhiBotManifest,
     taskId: string,
     memoryId: string,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<MemoryRecord> {
     const source = await this.store.get(memoryId);
 
@@ -331,7 +331,7 @@ export class NbgMemoryPods {
 
   async compact(
     manifest: PhiBotManifest,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<MemoryCompactionResult> {
     const now = this.now();
     const records = await this.store.listByBot(manifest.id);
@@ -411,7 +411,7 @@ export class NbgMemoryPods {
   async createEscalationPacket(
     manifest: PhiBotManifest,
     taskId: string,
-    runId = randomUUID(),
+    runId: string = randomUUID(),
   ): Promise<MemoryEscalationPacket> {
     const records = await this.retrieve(manifest, taskId, {
       limit: this.policy.escalationLimit,
