@@ -2,7 +2,7 @@
 
 **PhiBot** is a governed micro-agent runtime inspired by the Vessie / PhiVessel architecture.
 
-Instead of cloning one giant agent repeatedly, PhiBot is built around small purpose-specific workers with explicit identity, bounded memory, declared capabilities, authority limits, provider receipts, typed tool execution, a cryptographic Reality Gate, and an append-only ledger.
+Small specialist agents get explicit identity, bounded authority, provider receipts, governed tools, a cryptographic Reality Gate, nested NBG memory, and an append-only ledger.
 
 ## Core loop
 
@@ -10,63 +10,45 @@ Instead of cloning one giant agent repeatedly, PhiBot is built around small purp
 observe -> interpret -> propose -> verify -> ledger
 ```
 
-## Place in the Phi ecosystem
+## Phi ecosystem
 
 - **Vessie**: coordinator / governor
 - **PhiBots**: small specialist workers
 - **CommonLine**: inter-agent communication transport
 - **PhiOS**: host and capability substrate
-- **NBG memory**: scoped storage / retrieval / promotion layer
+- **NBG memory**: nested task / bot storage and retrieval
 - **Reality Gate**: governed external-action boundary
 - **Ledger**: receipts and provenance
 
 ## Current capabilities
 
-- typed PhiBot manifests
-- fixed five-stage vessel loop
-- provider registry
-- local Ollama provider with deterministic fallback
-- provider token / latency receipts
+- typed manifests
+- provider registry and local Ollama
+- deterministic provider fallback
 - typed tool capability registry
-- registry-owned action classes
-- deny-by-default unknown tools
-- bounded tool sandbox
-- cryptographic Reality Gate requests and grants
-- approve / deny / narrow decisions
-- short-lived one-use grants
-- grant binding to bot, run, capability, action class, and exact input digest
-- replay protection
-- gate + tool receipt chain
+- deny-by-default tool execution
+- one-use cryptographic Reality Gate grants
+- task-local NBG memory bubbles
+- parent bot memory bubbles
+- explicit threshold-based promotion
+- provenance and content digests
+- expiry and deterministic compaction
+- bounded Vessie escalation packets
 - tests and GitHub Actions CI
 
-## Reality Gate flow
+## NBG memory shape
 
 ```text
-gated tool call
-      |
-  gate request
-      |
- approve / deny / narrow
-      |
- signed one-use grant
-      |
- verify signature + expiry + binding + replay
-      |
-    execute
-      |
- gate + tool receipts
+Vessie
+  ▲
+  │ bounded escalation packet
+  │
+Bot Bubble
+  ├── promoted memory
+  ├── Task Bubble A
+  └── Task Bubble B
 ```
 
-A grant is not general permission. It is bound to the original bot, run ID, capability, authority class, and exact canonical tool-input SHA-256 digest.
+Task memories do not become durable bot memories by accident. Promotion is explicit, thresholded, and provenance-preserving.
 
-See [docs/REALITY_GATE.md](docs/REALITY_GATE.md) for the contract.
-
-## Design law
-
-> Capability is not authority.
-
-And now:
-
-> Approval is not permanent authority.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/TOOLS.md](docs/TOOLS.md), [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/REALITY_GATE.md](docs/REALITY_GATE.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/MEMORY.md](docs/MEMORY.md), [docs/REALITY_GATE.md](docs/REALITY_GATE.md), [docs/TOOLS.md](docs/TOOLS.md), and [docs/ROADMAP.md](docs/ROADMAP.md).

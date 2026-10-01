@@ -42,12 +42,15 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 4 - NBG memory pods
 
-- [ ] task memory bubble
-- [ ] bot-local memory bubble
-- [ ] promotion rules
-- [ ] provenance links
-- [ ] expiry / compaction
-- [ ] Vessie escalation memory packet
+- [x] task memory bubble
+- [x] bot-local parent bubble
+- [x] explicit promotion rules
+- [x] provenance links and content digests
+- [x] expiry
+- [x] deterministic compaction
+- [x] nested retrieval
+- [x] Vessie escalation memory packet
+- [x] pluggable memory-store seam
 
 ## Rung 5 - CommonLine
 
@@ -65,6 +68,7 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 - [ ] UI status events
 - [ ] governed bot spawning
 - [ ] durable replay store / platform key custody
+- [ ] durable NBG memory store
 
 ## Rung 7 - PhiBot spawning
 

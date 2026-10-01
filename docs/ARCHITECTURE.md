@@ -2,7 +2,7 @@
 
 ## Purpose
 
-PhiBot is the governed micro-agent layer of the Phi ecosystem. A PhiBot should be small enough to understand, replace, audit, and route cheaply.
+PhiBot is the governed micro-agent layer of the Phi ecosystem.
 
 > Capability is not authority.
 
@@ -11,62 +11,49 @@ PhiBot is the governed micro-agent layer of the Phi ecosystem. A PhiBot should b
 ```text
                    VESSIE
           governor / coordinator
-                    |
-          +---------+---------+
-          |         |         |
-       PhiBot    PhiBot    PhiBot
-          |         |         |
-          +------ CommonLine -+
-                    |
-                  PhiOS
-                    |
-          NBG / Ledger / Gate
+                    ▲
+          escalation packet
+                    │
+               Bot Bubble
+              /    |    \
+        Task A   Task B   promoted memory
+           │
+         PhiBot
+           │
+ provider -> proposal -> capability registry
+                         │
+                  manifest authority
+                    /    |    \
+                 allow  gate  deny
+                   │      │
+                   │  signed grant
+                   └── sandbox
+                         │
+                       ledger
 ```
 
-Inside one PhiBot:
+## NBG memory
 
-```text
-provider -> propose
-              |
-         capability registry
-              |
-       registry action class
-              |
-        manifest authority
-         /      |       \
-      allow    gate     deny
-        |       |
-        |    GateRequest
-        |       |
-        |   decision
-        |    / | \
-        | deny | narrow
-        |      |
-        |   signed grant
-        |      |
-        +-- verification
-              |
-           sandbox
-              |
-            ledger
-```
+Memory is nested by scope.
 
-## Authority
+A task bubble is the inner working context. A bot bubble is the parent persistent context. Information crosses that boundary only through explicit promotion rules.
 
-The manifest contains `read`, `propose`, `write`, and `deploy`. The tool registry owns the action class for every registered capability.
+Each record has provenance, content digest, salience, confidence, TTL, and bubble identity.
+
+Retrieval walks outward from current task to bot scope. Escalation to Vessie sends a bounded provenance-preserving packet rather than dumping the entire store.
+
+## Compaction
+
+Compaction removes expired, duplicate, and excess records deterministically. It never asks a model to rewrite historical records.
+
+## Storage boundary
+
+The current memory store is in-process. The `MemoryStore` interface is the seam for later PhiOS-backed persistence and vector/graph indexing.
 
 ## Reality Gate
 
-A gated authority class does not execute directly.
-
-The gate creates a request bound to the exact tool input digest. An approval produces a short-lived, signed, one-use grant. Verification checks signature, expiry, bot, run, capability, action class, input digest, and replay status before execution.
-
-This means approval cannot silently become standing authority.
+Gated tool operations use one-use signed grants bound to the exact operation.
 
 ## Ledger
 
-Reasoning, provider, gate, and tool events share the append-only receipt schema. Gate request, decision, verification, and tool execution IDs form an auditable chain.
-
-## Security boundary
-
-The current tool sandbox is cooperative and the default replay store is process-local. PhiOS service mode is expected to supply stronger process isolation, key custody, and durable replay state.
+Reasoning, provider, gate, tool, and memory events share the append-only receipt schema.
