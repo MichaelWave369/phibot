@@ -11,6 +11,24 @@ import type {
   VesselStage,
 } from "./types.js";
 
+function summarizeProviderUsage(stages: StageResult[]): Record<string, unknown> | undefined {
+  const traces = stages.flatMap((stage) => (stage.provider ? [stage.provider] : []));
+  if (traces.length === 0) return undefined;
+
+  return {
+    providerTotals: {
+      calls: traces.length,
+      fallbackCalls: traces.filter((item) => item.fallback).length,
+      latencyMs: traces.reduce((sum, item) => sum + item.latencyMs, 0),
+      inputTokens: traces.reduce((sum, item) => sum + (item.inputTokens ?? 0), 0),
+      outputTokens: traces.reduce((sum, item) => sum + (item.outputTokens ?? 0), 0),
+      totalTokens: traces.reduce((sum, item) => sum + (item.totalTokens ?? 0), 0),
+      providers: [...new Set(traces.map((item) => item.provider))],
+      models: [...new Set(traces.map((item) => item.model))],
+    },
+  };
+}
+
 export class PhiBotRuntime {
   constructor(
     private readonly manifest: PhiBotManifest,
@@ -55,7 +73,13 @@ export class PhiBotRuntime {
         throw new Error(`Adapter contract violation: expected ${stage}, got ${result.stage}`);
       }
       stages.push(result);
-      await record(stage, "ok", result.summary, result.confidence);
+      await record(
+        stage,
+        "ok",
+        result.summary,
+        result.confidence,
+        result.provider ? { provider: result.provider } : undefined,
+      );
       return result;
     };
 
@@ -73,7 +97,10 @@ export class PhiBotRuntime {
         "escalate",
         `Confidence below threshold; escalate to ${this.manifest.escalation.target}.`,
         proposal.confidence,
-        { threshold: this.manifest.escalation.confidenceBelow },
+        {
+          threshold: this.manifest.escalation.confidenceBelow,
+          ...(summarizeProviderUsage(stages) ?? {}),
+        },
       );
       return {
         runId,
@@ -95,7 +122,10 @@ export class PhiBotRuntime {
         authority.gated ? "escalate" : "blocked",
         authority.reason,
         verified.confidence,
-        { realityGate: authority.gated },
+        {
+          realityGate: authority.gated,
+          ...(summarizeProviderUsage(stages) ?? {}),
+        },
       );
       return {
         runId,
@@ -106,7 +136,13 @@ export class PhiBotRuntime {
       };
     }
 
-    await record("ledger", "ok", "Run completed inside declared authority.");
+    await record(
+      "ledger",
+      "ok",
+      "Run completed inside declared authority.",
+      undefined,
+      summarizeProviderUsage(stages),
+    );
     return {
       runId,
       botId: this.manifest.id,

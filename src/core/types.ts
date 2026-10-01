@@ -39,6 +39,19 @@ export interface BotInput {
   context?: Record<string, unknown>;
 }
 
+export interface ProviderTrace {
+  provider: string;
+  model: string;
+  fallback: boolean;
+  latencyMs: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  providerDurationMs?: number;
+  loadDurationMs?: number;
+  fallbackReason?: string;
+}
+
 export interface StageResult {
   stage: Exclude<VesselStage, "ledger">;
   summary: string;
@@ -48,6 +61,7 @@ export interface StageResult {
     external: boolean;
     description: string;
   };
+  provider?: ProviderTrace;
 }
 
 export interface LedgerReceipt {
