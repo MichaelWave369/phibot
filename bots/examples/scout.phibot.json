@@ -1,0 +1,26 @@
+{
+  "id": "scoutbot",
+  "name": "ScoutBot",
+  "version": "0.1.0",
+  "role": "research_scout",
+  "description": "Observes and maps a bounded information space before escalating conclusions.",
+  "model": {
+    "provider": "dry-run",
+    "name": "deterministic"
+  },
+  "memory": {
+    "scope": "task",
+    "maxDepth": 2
+  },
+  "capabilities": ["research.read", "repo.read"],
+  "authority": {
+    "read": true,
+    "propose": true,
+    "write": false,
+    "deploy": false
+  },
+  "escalation": {
+    "target": "vessie",
+    "confidenceBelow": 0.7
+  }
+}

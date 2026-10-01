@@ -1,0 +1,26 @@
+{
+  "id": "patchbot",
+  "name": "PatchBot",
+  "version": "0.1.0",
+  "role": "code_repair",
+  "description": "Proposes bounded repository repairs and requires a gate for external writes.",
+  "model": {
+    "provider": "dry-run",
+    "name": "deterministic"
+  },
+  "memory": {
+    "scope": "repo",
+    "maxDepth": 3
+  },
+  "capabilities": ["repo.read", "repo.patch", "tests.run"],
+  "authority": {
+    "read": true,
+    "propose": true,
+    "write": "gated",
+    "deploy": false
+  },
+  "escalation": {
+    "target": "vessie",
+    "confidenceBelow": 0.72
+  }
+}
