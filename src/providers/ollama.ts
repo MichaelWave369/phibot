@@ -24,8 +24,9 @@ function buildMessages(request: ProviderRequest): Array<{ role: "system" | "user
     "You are the execution brain for a governed PhiBot.",
     "Return exactly one JSON object and no markdown.",
     'Required keys: {"summary": string, "confidence": number between 0 and 1}.',
-    'Optional action: {"capability": string, "external": boolean, "description": string}.',
+    'Optional action: {"capability": string, "external": boolean, "description": string, "authority"?: "read"|"propose"|"write"|"deploy", "input"?: any}.',
     "Never invent capabilities. If uncertain, lower confidence instead of pretending.",
+    "The runtime and tool registry are authoritative for permissions and action classes.",
     "An action is a proposal only; runtime authority checks happen after your response.",
   ].join(" ");
 
@@ -111,17 +112,16 @@ export class OllamaProvider implements PhiProvider {
           ? undefined
           : (inputTokens ?? 0) + (outputTokens ?? 0);
 
+      const providerDurationMs = nsToMs(body.total_duration);
+      const loadDurationMs = nsToMs(body.load_duration);
+
       const metrics: ProviderMetrics = {
         latencyMs,
         ...(inputTokens === undefined ? {} : { inputTokens }),
         ...(outputTokens === undefined ? {} : { outputTokens }),
         ...(totalTokens === undefined ? {} : { totalTokens }),
-        ...(nsToMs(body.total_duration) === undefined
-          ? {}
-          : { providerDurationMs: nsToMs(body.total_duration) as number }),
-        ...(nsToMs(body.load_duration) === undefined
-          ? {}
-          : { loadDurationMs: nsToMs(body.load_duration) as number }),
+        ...(providerDurationMs === undefined ? {} : { providerDurationMs }),
+        ...(loadDurationMs === undefined ? {} : { loadDurationMs }),
       };
 
       return {

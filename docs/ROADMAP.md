@@ -24,11 +24,12 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 2 - Tool capability registry
 
-- [ ] typed capability descriptors
-- [ ] per-capability arguments
-- [ ] action-class authority
-- [ ] tool execution sandbox
-- [ ] deny-by-default unknown tools
+- [x] typed capability descriptors
+- [x] per-capability arguments
+- [x] action-class authority
+- [x] tool execution sandbox
+- [x] deny-by-default unknown tools
+- [x] tool execution receipts
 
 ## Rung 3 - Reality Gate
 
