@@ -16,18 +16,14 @@ The initial rung ladder is complete. Work now moves through integration and qual
 ## Acceptance and qualification track
 
 - [x] deterministic full-lifecycle acceptance harness
-- [x] spawn -> NBG -> CommonLine -> provider -> Gate -> tool -> dissolve
-- [x] receipt-chain acceptance assertion
-- [x] resource-budget acceptance assertion
-- [x] Reality Gate replay rejection assertion
 - [x] strict local Ollama acceptance mode
 - [x] field qualification evidence-pack writer
-- [x] SHA-256 artifact manifest + detached record digest
-- [x] FAIL records preserve available evidence
-- [x] overwrite protection for qualification destinations
 - [x] target-machine qualification doctor
 - [x] exact Ollama model-tag readiness check
 - [x] automatic Git source-commit binding
+- [x] real bounded inference readiness probe
+- [x] governed no-think Ollama control-stage profile
+- [x] recorded/configurable provider timeout
 - [ ] run and preserve PASS qualification on target Ollama machine
 
 ## PhiOS integration track

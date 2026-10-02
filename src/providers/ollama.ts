@@ -1,9 +1,17 @@
-import type { ProviderCompletion, ProviderMetrics, ProviderRequest, PhiProvider } from "./types.js";
+import type {
+  ProviderCompletion,
+  ProviderMetrics,
+  ProviderRequest,
+  PhiProvider,
+} from "./types.js";
 
 export interface OllamaProviderOptions {
   baseUrl?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  think?: boolean | string | null;
+  keepAlive?: string | number;
+  numPredict?: number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -19,12 +27,15 @@ function nsToMs(value: unknown): number | undefined {
   return number === undefined ? undefined : number / 1_000_000;
 }
 
-function buildMessages(request: ProviderRequest): Array<{ role: "system" | "user"; content: string }> {
+function buildMessages(
+  request: ProviderRequest,
+): Array<{ role: "system" | "user"; content: string }> {
   const system = [
     "You are the execution brain for a governed PhiBot.",
     "Return exactly one JSON object and no markdown.",
-    'Required keys: {"summary": string, "confidence": number between 0 and 1}.',
+    '{"summary": string, "confidence": number between 0 and 1} are required.',
     'Optional action: {"capability": string, "external": boolean, "description": string, "authority"?: "read"|"propose"|"write"|"deploy", "input"?: any}.',
+    "Be concise. Do not emit chain-of-thought or hidden reasoning.",
     "Never invent capabilities. If uncertain, lower confidence instead of pretending.",
     "The runtime and tool registry are authoritative for permissions and action classes.",
     "An action is a proposal only; runtime authority checks happen after your response.",
@@ -62,12 +73,29 @@ export class OllamaProvider implements PhiProvider {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly fetchImpl: typeof fetch;
+  private readonly think: boolean | string | null;
+  private readonly keepAlive: string | number;
+  private readonly numPredict: number;
 
   constructor(model: string, options: OllamaProviderOptions = {}) {
     this.model = model;
-    this.baseUrl = (options.baseUrl ?? process.env.OLLAMA_HOST ?? "http://127.0.0.1:11434").replace(/\/$/, "");
+    this.baseUrl = (
+      options.baseUrl ??
+      process.env.OLLAMA_HOST ??
+      "http://127.0.0.1:11434"
+    ).replace(/\/$/, "");
     this.timeoutMs = options.timeoutMs ?? 30_000;
     this.fetchImpl = options.fetchImpl ?? fetch;
+    this.think = options.think ?? false;
+    this.keepAlive = options.keepAlive ?? "10m";
+    this.numPredict = options.numPredict ?? 256;
+
+    if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 1) {
+      throw new Error("Ollama timeoutMs must be a positive integer.");
+    }
+    if (!Number.isInteger(this.numPredict) || this.numPredict < 1) {
+      throw new Error("Ollama numPredict must be a positive integer.");
+    }
   }
 
   async complete(request: ProviderRequest): Promise<ProviderCompletion> {
@@ -84,9 +112,12 @@ export class OllamaProvider implements PhiProvider {
           model: this.model,
           stream: false,
           format: "json",
+          think: this.think,
+          keep_alive: this.keepAlive,
           messages: buildMessages(request),
           options: {
             temperature: 0,
+            num_predict: this.numPredict,
           },
         }),
       });
@@ -101,7 +132,11 @@ export class OllamaProvider implements PhiProvider {
       }
 
       const body = (await response.json()) as unknown;
-      if (!isRecord(body) || !isRecord(body.message) || typeof body.message.content !== "string") {
+      if (
+        !isRecord(body) ||
+        !isRecord(body.message) ||
+        typeof body.message.content !== "string"
+      ) {
         throw new Error("Ollama returned an invalid chat response.");
       }
 
@@ -120,7 +155,9 @@ export class OllamaProvider implements PhiProvider {
         ...(inputTokens === undefined ? {} : { inputTokens }),
         ...(outputTokens === undefined ? {} : { outputTokens }),
         ...(totalTokens === undefined ? {} : { totalTokens }),
-        ...(providerDurationMs === undefined ? {} : { providerDurationMs }),
+        ...(providerDurationMs === undefined
+          ? {}
+          : { providerDurationMs }),
         ...(loadDurationMs === undefined ? {} : { loadDurationMs }),
       };
 
@@ -133,7 +170,9 @@ export class OllamaProvider implements PhiProvider {
       };
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`Ollama request timed out after ${this.timeoutMs}ms.`);
+        throw new Error(
+          `Ollama request timed out after ${this.timeoutMs}ms.`,
+        );
       }
       throw error;
     } finally {

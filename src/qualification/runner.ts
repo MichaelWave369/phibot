@@ -7,7 +7,10 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { join, relative, resolve, sep } from "node:path";
-import { runAcceptanceScenario } from "../acceptance/scenario.js";
+import {
+  DEFAULT_OLLAMA_ACCEPTANCE_TIMEOUT_MS,
+  runAcceptanceScenario,
+} from "../acceptance/scenario.js";
 import { runQualificationDoctor } from "./doctor.js";
 import type {
   QualificationArtifact,
@@ -111,6 +114,9 @@ export async function runFieldQualification(
   const mode = options.mode ?? "ollama";
   const clock = options.now ?? Date.now;
   const startedAt = new Date(clock()).toISOString();
+  const ollamaTimeoutMs =
+    options.ollamaTimeoutMs ??
+    DEFAULT_OLLAMA_ACCEPTANCE_TIMEOUT_MS;
 
   const preflight = await runQualificationDoctor({
     mode,
@@ -123,6 +129,9 @@ export async function runFieldQualification(
     ...(options.fetchImpl === undefined
       ? {}
       : { fetchImpl: options.fetchImpl }),
+    ...(mode === "ollama"
+      ? { inferenceTimeoutMs: Math.min(ollamaTimeoutMs, 60_000) }
+      : {}),
     now: clock,
   });
 
@@ -144,6 +153,9 @@ export async function runFieldQualification(
         ...(options.ollamaHost === undefined
           ? {}
           : { ollamaHost: options.ollamaHost }),
+        ...(mode === "ollama"
+          ? { ollamaTimeoutMs }
+          : {}),
         ...(options.secret === undefined ? {} : { secret: options.secret }),
         now: clock,
       });
@@ -164,6 +176,9 @@ export async function runFieldQualification(
     ...(preflight.ollamaHost === undefined
       ? {}
       : { ollamaHost: preflight.ollamaHost }),
+    ...(mode === "ollama"
+      ? { ollamaTimeoutMs }
+      : {}),
     ...(options.sourceCommit === undefined
       ? {}
       : { sourceCommit: options.sourceCommit }),

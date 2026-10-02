@@ -25,6 +25,7 @@ export interface QualificationPreflight {
   ollamaHost?: string;
   requiredModel?: string;
   ollamaVersion?: string;
+  inferenceLatencyMs?: number;
   availableModels: string[];
   checks: QualificationPreflightCheck[];
   passed: boolean;
@@ -36,6 +37,7 @@ export interface QualificationEnvironment {
   arch: string;
   providerMode: AcceptanceProviderMode;
   ollamaHost?: string;
+  ollamaTimeoutMs?: number;
   sourceCommit?: string;
 }
 
@@ -69,6 +71,7 @@ export interface QualificationOptions {
   outputDir: string;
   mode?: AcceptanceProviderMode;
   ollamaHost?: string;
+  ollamaTimeoutMs?: number;
   requiredModel?: string;
   sourceCommit?: string;
   secret?: string;

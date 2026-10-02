@@ -17,6 +17,7 @@ import type {
 } from "./types.js";
 
 const HELPER_ID = "acceptance-helper";
+const DEFAULT_OLLAMA_ACCEPTANCE_TIMEOUT_MS = 120_000;
 
 function helperManifest(): PhiBotManifest {
   return {
@@ -205,13 +206,20 @@ export async function runAcceptanceScenario(
         message.payload.memoryPacket?.packetId === packet.packetId,
     );
 
+    const providerTimeoutMs =
+      options.ollamaTimeoutMs ??
+      DEFAULT_OLLAMA_ACCEPTANCE_TIMEOUT_MS;
+
     const provider =
       mode === "ollama"
         ? new OllamaProvider(manifest.model.name, {
             ...(options.ollamaHost === undefined
               ? {}
               : { baseUrl: options.ollamaHost }),
-            timeoutMs: 60_000,
+            timeoutMs: providerTimeoutMs,
+            think: false,
+            keepAlive: "10m",
+            numPredict: 256,
           })
         : new DryRunProvider("acceptance-deterministic");
 
@@ -400,6 +408,9 @@ export async function runAcceptanceScenario(
       providerIds,
       providerModels,
       providerTokens,
+      ...(mode === "ollama"
+        ? { providerTimeoutMs }
+        : {}),
       toolCalls,
       receiptStages: stages,
       checks,
@@ -428,3 +439,5 @@ export async function runAcceptanceScenario(
     await service.stop().catch(() => undefined);
   }
 }
+
+export { DEFAULT_OLLAMA_ACCEPTANCE_TIMEOUT_MS };
