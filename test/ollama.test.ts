@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { PhiBotManifest } from "../src/core/types.js";
-import { OllamaProvider } from "../src/providers/ollama.js";
+import { OllamaProvider, STAGE_FORMAT } from "../src/providers/ollama.js";
 
 const manifest: PhiBotManifest = {
   id: "local-testbot",
@@ -21,7 +21,7 @@ test("maps Ollama chat response into provider completion metrics", async () => {
     const request = JSON.parse(String(init?.body)) as Record<string, unknown>;
     assert.equal(request.model, "qwen3:4b");
     assert.equal(request.stream, false);
-    assert.equal(request.format, "json");
+    assert.deepEqual(request.format, STAGE_FORMAT);
 
     return new Response(
       JSON.stringify({
