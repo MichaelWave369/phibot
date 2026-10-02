@@ -40,6 +40,8 @@ Default policy:
 
 This prevents a single weird task from creating a permanent organizational chart, a behavior humans have already explored extensively.
 
+Each accepted spawn proposal is also one-use. Its proposal ID is consumed through the durable replay store before registration, so the same evidence artifact cannot mint multiple bots.
+
 ## Least authority
 
 A spawn template defines:
@@ -81,7 +83,7 @@ The approval is bound to:
 - exact generated manifest digest
 - expiration time
 
-The approval is one-use. Consumption is stored in the durable service replay store, so restart does not make it reusable.
+The approval is one-use. Consumption is stored in the durable service replay store, so restart does not make it reusable. Approval shape/signature checks happen before proposal consumption, so a missing or malformed approval does not burn an otherwise valid proposal.
 
 ## Temporary crew
 
