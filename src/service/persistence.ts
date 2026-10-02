@@ -13,7 +13,7 @@ import type {
   CommonLineGroup,
 } from "../commonline/types.js";
 import type { CommonLineGroupStore } from "../commonline/groups.js";
-import type { CommonLineTransport } from "../commonline/transport.js";
+import { compareMessages, type CommonLineTransport } from "../commonline/transport.js";
 import type { ReplayStore } from "../gate/replay.js";
 import type { MemoryRecord } from "../memory/types.js";
 import type { MemoryStore } from "../memory/store.js";
@@ -178,11 +178,7 @@ export class FileCommonLineTransport implements CommonLineTransport {
     const messages = await this.all();
     return messages
       .filter((message) => message.threadId === threadId)
-      .sort(
-        (a, b) =>
-          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
-          a.messageId.localeCompare(b.messageId),
-      );
+      .sort(compareMessages);
   }
 
   async listForBot(botId: string): Promise<CommonLineEnvelope[]> {
@@ -193,11 +189,7 @@ export class FileCommonLineTransport implements CommonLineTransport {
           (recipient) => recipient.kind === "bot" && recipient.id === botId,
         ),
       )
-      .sort(
-        (a, b) =>
-          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
-          a.messageId.localeCompare(b.messageId),
-      );
+      .sort(compareMessages);
   }
 
   private async all(): Promise<CommonLineEnvelope[]> {
