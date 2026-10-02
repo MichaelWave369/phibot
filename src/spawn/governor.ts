@@ -281,6 +281,13 @@ export class SpawnGovernor {
       }
     }
 
+    const proposalConsumed = await this.service.replayStore.consume(
+      `spawn-proposal:${proposal.proposalId}`,
+    );
+    if (!proposalConsumed) {
+      throw new Error("Spawn proposal replay detected.");
+    }
+
     let approvalId: string | undefined;
     if (proposal.lifetime === "persistent") {
       if (!approval) {
