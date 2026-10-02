@@ -1,6 +1,6 @@
 # PhiBot Roadmap
 
-The initial rung ladder is complete. Work now moves through integration and qualification tracks.
+The initial rung ladder is complete. Work now moves through integration and field qualification.
 
 ## Rungs 0-7
 
@@ -21,9 +21,10 @@ The initial rung ladder is complete. Work now moves through integration and qual
 - [x] target-machine qualification doctor
 - [x] exact Ollama model-tag readiness check
 - [x] automatic Git source-commit binding
-- [x] real bounded inference readiness probe
-- [x] governed no-think Ollama control-stage profile
-- [x] recorded/configurable provider timeout
+- [x] representative governed inference readiness probe
+- [x] JSON Schema structured control-stage outputs
+- [x] narrowly scoped token-repeat recovery retry
+- [x] retry evidence in provider traces
 - [ ] run and preserve PASS qualification on target Ollama machine
 
 ## PhiOS integration track

@@ -12,7 +12,59 @@ export interface OllamaProviderOptions {
   think?: boolean | string | null;
   keepAlive?: string | number;
   numPredict?: number;
+  repeatRecovery?: boolean;
 }
+
+interface AttemptProfile {
+  temperature: number;
+  repeatPenalty?: number;
+  repeatLastN?: number;
+}
+
+class OllamaHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly detail: string,
+  ) {
+    super(
+      `Ollama request failed with HTTP ${status}${detail ? `: ${detail}` : ""}`,
+    );
+    this.name = "OllamaHttpError";
+  }
+}
+
+const STAGE_FORMAT = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    summary: {
+      type: "string",
+      minLength: 1,
+      maxLength: 600,
+    },
+    confidence: {
+      type: "number",
+      minimum: 0,
+      maximum: 1,
+    },
+    action: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        capability: { type: "string", minLength: 1 },
+        external: { type: "boolean" },
+        description: { type: "string", minLength: 1, maxLength: 400 },
+        authority: {
+          type: "string",
+          enum: ["read", "propose", "write", "deploy"],
+        },
+        input: {},
+      },
+      required: ["capability", "external", "description"],
+    },
+  },
+  required: ["summary", "confidence"],
+} as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -27,25 +79,30 @@ function nsToMs(value: unknown): number | undefined {
   return number === undefined ? undefined : number / 1_000_000;
 }
 
+function isRepeatLimitError(error: unknown): error is OllamaHttpError {
+  return (
+    error instanceof OllamaHttpError &&
+    error.status === 500 &&
+    error.detail.toLowerCase().includes("token repeat limit reached")
+  );
+}
+
 function buildMessages(
   request: ProviderRequest,
 ): Array<{ role: "system" | "user"; content: string }> {
   const system = [
-    "You are the execution brain for a governed PhiBot.",
-    "Return exactly one JSON object and no markdown.",
-    '{"summary": string, "confidence": number between 0 and 1} are required.',
-    'Optional action: {"capability": string, "external": boolean, "description": string, "authority"?: "read"|"propose"|"write"|"deploy", "input"?: any}.',
-    "Be concise. Do not emit chain-of-thought or hidden reasoning.",
-    "Never invent capabilities. If uncertain, lower confidence instead of pretending.",
-    "The runtime and tool registry are authoritative for permissions and action classes.",
-    "An action is a proposal only; runtime authority checks happen after your response.",
+    "You are the bounded execution brain for a governed PhiBot.",
+    "Return one concise object matching the supplied JSON schema.",
+    "Summary must be brief and operational.",
+    "Only include action when a concrete capability should be proposed.",
+    "Never invent capabilities or authority.",
+    "Do not emit chain-of-thought.",
   ].join(" ");
 
   const user = JSON.stringify({
     stage: request.stage,
     bot: {
       id: request.manifest.id,
-      name: request.manifest.name,
       role: request.manifest.role,
       description: request.manifest.description,
     },
@@ -76,6 +133,7 @@ export class OllamaProvider implements PhiProvider {
   private readonly think: boolean | string | null;
   private readonly keepAlive: string | number;
   private readonly numPredict: number;
+  private readonly repeatRecovery: boolean;
 
   constructor(model: string, options: OllamaProviderOptions = {}) {
     this.model = model;
@@ -88,7 +146,8 @@ export class OllamaProvider implements PhiProvider {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.think = options.think ?? false;
     this.keepAlive = options.keepAlive ?? "10m";
-    this.numPredict = options.numPredict ?? 256;
+    this.numPredict = options.numPredict ?? 160;
+    this.repeatRecovery = options.repeatRecovery ?? true;
 
     if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 1) {
       throw new Error("Ollama timeoutMs must be a positive integer.");
@@ -98,7 +157,10 @@ export class OllamaProvider implements PhiProvider {
     }
   }
 
-  async complete(request: ProviderRequest): Promise<ProviderCompletion> {
+  private async attempt(
+    request: ProviderRequest,
+    profile: AttemptProfile,
+  ): Promise<{ body: Record<string, unknown>; latencyMs: number }> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     const started = Date.now();
@@ -111,13 +173,19 @@ export class OllamaProvider implements PhiProvider {
         body: JSON.stringify({
           model: this.model,
           stream: false,
-          format: "json",
+          format: STAGE_FORMAT,
           think: this.think,
           keep_alive: this.keepAlive,
           messages: buildMessages(request),
           options: {
-            temperature: 0,
+            temperature: profile.temperature,
             num_predict: this.numPredict,
+            ...(profile.repeatPenalty === undefined
+              ? {}
+              : { repeat_penalty: profile.repeatPenalty }),
+            ...(profile.repeatLastN === undefined
+              ? {}
+              : { repeat_last_n: profile.repeatLastN }),
           },
         }),
       });
@@ -126,48 +194,15 @@ export class OllamaProvider implements PhiProvider {
 
       if (!response.ok) {
         const detail = await response.text().catch(() => "");
-        throw new Error(
-          `Ollama request failed with HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
-        );
+        throw new OllamaHttpError(response.status, detail);
       }
 
       const body = (await response.json()) as unknown;
-      if (
-        !isRecord(body) ||
-        !isRecord(body.message) ||
-        typeof body.message.content !== "string"
-      ) {
+      if (!isRecord(body)) {
         throw new Error("Ollama returned an invalid chat response.");
       }
 
-      const inputTokens = asNumber(body.prompt_eval_count);
-      const outputTokens = asNumber(body.eval_count);
-      const totalTokens =
-        inputTokens === undefined && outputTokens === undefined
-          ? undefined
-          : (inputTokens ?? 0) + (outputTokens ?? 0);
-
-      const providerDurationMs = nsToMs(body.total_duration);
-      const loadDurationMs = nsToMs(body.load_duration);
-
-      const metrics: ProviderMetrics = {
-        latencyMs,
-        ...(inputTokens === undefined ? {} : { inputTokens }),
-        ...(outputTokens === undefined ? {} : { outputTokens }),
-        ...(totalTokens === undefined ? {} : { totalTokens }),
-        ...(providerDurationMs === undefined
-          ? {}
-          : { providerDurationMs }),
-        ...(loadDurationMs === undefined ? {} : { loadDurationMs }),
-      };
-
-      return {
-        provider: this.id,
-        model: typeof body.model === "string" ? body.model : this.model,
-        content: body.message.content,
-        fallback: false,
-        metrics,
-      };
+      return { body, latencyMs };
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error(
@@ -179,4 +214,70 @@ export class OllamaProvider implements PhiProvider {
       clearTimeout(timeout);
     }
   }
+
+  async complete(request: ProviderRequest): Promise<ProviderCompletion> {
+    const totalStarted = Date.now();
+    let attempts = 1;
+    let retryReason: string | undefined;
+    let result: { body: Record<string, unknown>; latencyMs: number };
+
+    try {
+      result = await this.attempt(request, {
+        temperature: 0,
+      });
+    } catch (error: unknown) {
+      if (!this.repeatRecovery || !isRepeatLimitError(error)) {
+        throw error;
+      }
+
+      attempts = 2;
+      retryReason = "token_repeat_limit";
+      result = await this.attempt(request, {
+        temperature: 0.2,
+        repeatPenalty: 1.1,
+        repeatLastN: 64,
+      });
+    }
+
+    const body = result.body;
+    if (
+      !isRecord(body.message) ||
+      typeof body.message.content !== "string"
+    ) {
+      throw new Error("Ollama returned an invalid chat response.");
+    }
+
+    const inputTokens = asNumber(body.prompt_eval_count);
+    const outputTokens = asNumber(body.eval_count);
+    const totalTokens =
+      inputTokens === undefined && outputTokens === undefined
+        ? undefined
+        : (inputTokens ?? 0) + (outputTokens ?? 0);
+
+    const providerDurationMs = nsToMs(body.total_duration);
+    const loadDurationMs = nsToMs(body.load_duration);
+
+    const metrics: ProviderMetrics = {
+      latencyMs: Date.now() - totalStarted,
+      attempts,
+      ...(retryReason === undefined ? {} : { retryReason }),
+      ...(inputTokens === undefined ? {} : { inputTokens }),
+      ...(outputTokens === undefined ? {} : { outputTokens }),
+      ...(totalTokens === undefined ? {} : { totalTokens }),
+      ...(providerDurationMs === undefined
+        ? {}
+        : { providerDurationMs }),
+      ...(loadDurationMs === undefined ? {} : { loadDurationMs }),
+    };
+
+    return {
+      provider: this.id,
+      model: typeof body.model === "string" ? body.model : this.model,
+      content: body.message.content,
+      fallback: false,
+      metrics,
+    };
+  }
 }
+
+export { STAGE_FORMAT };

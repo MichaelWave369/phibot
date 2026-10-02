@@ -55,6 +55,8 @@ export interface ProviderTrace {
   totalTokens?: number;
   providerDurationMs?: number;
   loadDurationMs?: number;
+  attempts?: number;
+  retryReason?: string;
   fallbackReason?: string;
 }
 
