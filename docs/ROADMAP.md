@@ -1,6 +1,6 @@
 # PhiBot Roadmap
 
-The roadmap is rung-based. Each rung should remain runnable before the next one begins.
+The initial rung ladder is complete. Work now moves through integration and acceptance tracks.
 
 ## Rung 0 - Bootstrap
 
@@ -94,11 +94,26 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 - [x] spawn / dissolve receipt chain
 - [x] PhiOS status events
 
-## Next integration track
+## Acceptance track
+
+- [x] deterministic full-lifecycle acceptance harness
+- [x] spawn -> NBG -> CommonLine -> provider -> Gate -> tool -> dissolve
+- [x] receipt-chain acceptance assertion
+- [x] resource-budget acceptance assertion
+- [x] Reality Gate replay rejection assertion
+- [x] local Ollama strict acceptance mode
+- [ ] run and record live Ollama acceptance on target machine
+
+## PhiOS integration track
 
 - [ ] PhiOS-native process isolation
 - [ ] PhiOS-native key custody
 - [ ] PhiOS-native IPC adapter
+- [ ] service startup/package integration in PhiOS image
+- [ ] PhiOS UI crew/status surface
+
+## Ecosystem integration track
+
 - [ ] connect standalone CommonLine transport
 - [ ] connect Vessie spawn-policy UI
-- [ ] end-to-end local Ollama crew acceptance test
+- [ ] connect real repository read/patch/test tools behind Reality Gate
