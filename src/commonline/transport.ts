@@ -7,6 +7,21 @@ export interface CommonLineTransport {
   listForBot(botId: string): Promise<CommonLineEnvelope[]>;
 }
 
+function compareMessages(
+  a: CommonLineEnvelope,
+  b: CommonLineEnvelope,
+): number {
+  if (a.replyTo === b.messageId) return 1;
+  if (b.replyTo === a.messageId) return -1;
+  if (a.handoffFrom === b.messageId) return 1;
+  if (b.handoffFrom === a.messageId) return -1;
+
+  return (
+    Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
+    a.messageId.localeCompare(b.messageId)
+  );
+}
+
 export class MemoryCommonLineTransport implements CommonLineTransport {
   private readonly messages = new Map<string, CommonLineEnvelope>();
 
@@ -25,11 +40,7 @@ export class MemoryCommonLineTransport implements CommonLineTransport {
   async listThread(threadId: string): Promise<CommonLineEnvelope[]> {
     return [...this.messages.values()]
       .filter((message) => message.threadId === threadId)
-      .sort(
-        (a, b) =>
-          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
-          a.messageId.localeCompare(b.messageId),
-      )
+      .sort(compareMessages)
       .map((message) => structuredClone(message));
   }
 
@@ -40,11 +51,9 @@ export class MemoryCommonLineTransport implements CommonLineTransport {
           (recipient) => recipient.kind === "bot" && recipient.id === botId,
         ),
       )
-      .sort(
-        (a, b) =>
-          Date.parse(a.createdAt) - Date.parse(b.createdAt) ||
-          a.messageId.localeCompare(b.messageId),
-      )
+      .sort(compareMessages)
       .map((message) => structuredClone(message));
   }
 }
+
+export { compareMessages };
