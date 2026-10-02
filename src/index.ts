@@ -106,12 +106,17 @@ export type {
   ProviderMetrics,
   ProviderRequest,
 } from "./providers/types.js";
+export { runQualificationDoctor } from "./qualification/doctor.js";
+export type { QualificationDoctorOptions } from "./qualification/doctor.js";
 export { runFieldQualification } from "./qualification/runner.js";
 export type {
   QualificationArtifact,
+  QualificationCheckStatus,
   QualificationEnvironment,
   QualificationFailure,
   QualificationOptions,
+  QualificationPreflight,
+  QualificationPreflightCheck,
   QualificationRecord,
   QualificationResult,
   QualificationStatus,

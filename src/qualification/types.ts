@@ -4,11 +4,30 @@ import type {
 } from "../acceptance/types.js";
 
 export type QualificationStatus = "PASS" | "FAIL";
+export type QualificationCheckStatus = "pass" | "fail";
 
 export interface QualificationArtifact {
   path: string;
   sha256: string;
   bytes: number;
+}
+
+export interface QualificationPreflightCheck {
+  name: string;
+  status: QualificationCheckStatus;
+  detail: string;
+}
+
+export interface QualificationPreflight {
+  schema: "phibot.qualification.preflight.v1";
+  checkedAt: string;
+  providerMode: AcceptanceProviderMode;
+  ollamaHost?: string;
+  requiredModel?: string;
+  ollamaVersion?: string;
+  availableModels: string[];
+  checks: QualificationPreflightCheck[];
+  passed: boolean;
 }
 
 export interface QualificationEnvironment {
@@ -32,6 +51,7 @@ export interface QualificationRecord {
   startedAt: string;
   finishedAt: string;
   environment: QualificationEnvironment;
+  preflight: QualificationPreflight;
   runtimeStateDir: string;
   acceptance?: AcceptanceReport;
   failure?: QualificationFailure;
@@ -49,7 +69,9 @@ export interface QualificationOptions {
   outputDir: string;
   mode?: AcceptanceProviderMode;
   ollamaHost?: string;
+  requiredModel?: string;
   sourceCommit?: string;
   secret?: string;
   now?: () => number;
+  fetchImpl?: typeof fetch;
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { runFieldQualification } from "./qualification/runner.js";
 import type { AcceptanceProviderMode } from "./acceptance/types.js";
@@ -27,6 +28,23 @@ function defaultOutputDir(): string {
     .toISOString()
     .replace(/[:.]/g, "-");
   return resolve(".phibot", "qualification", stamp);
+}
+
+function currentGitCommit(): string | undefined {
+  try {
+    const value = execFileSync(
+      "git",
+      ["rev-parse", "HEAD"],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).trim();
+
+    return /^[0-9a-f]{40}$/i.test(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function parseArgs(argv: string[]): Args {
@@ -62,6 +80,7 @@ function parseArgs(argv: string[]): Args {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const outputDir = args.outputDir ?? defaultOutputDir();
+  const sourceCommit = args.sourceCommit ?? currentGitCommit();
 
   const result = await runFieldQualification({
     outputDir,
@@ -69,9 +88,9 @@ async function main(): Promise<void> {
     ...(args.ollamaHost === undefined
       ? {}
       : { ollamaHost: args.ollamaHost }),
-    ...(args.sourceCommit === undefined
+    ...(sourceCommit === undefined
       ? {}
-      : { sourceCommit: args.sourceCommit }),
+      : { sourceCommit }),
   });
 
   console.log(
@@ -80,6 +99,10 @@ async function main(): Promise<void> {
         status: result.record.status,
         qualificationId: result.record.qualificationId,
         providerMode: result.record.environment.providerMode,
+        sourceCommit:
+          result.record.environment.sourceCommit ?? null,
+        preflightPassed: result.record.preflight.passed,
+        preflightChecks: result.record.preflight.checks,
         outputDir,
         recordPath: result.recordPath,
         digestPath: result.digestPath,
