@@ -32,6 +32,7 @@ export interface AcceptanceReport {
   providerIds: string[];
   providerModels: string[];
   providerTokens: number;
+  providerTimeoutMs?: number;
   toolCalls: number;
   receiptStages: string[];
   checks: AcceptanceChecks;
@@ -42,6 +43,7 @@ export interface AcceptanceOptions {
   stateDir: string;
   mode?: AcceptanceProviderMode;
   ollamaHost?: string;
+  ollamaTimeoutMs?: number;
   secret?: string;
   now?: () => number;
 }

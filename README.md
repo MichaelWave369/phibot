@@ -6,7 +6,7 @@ The Rung 0-7 architecture is complete: local model providers, governed tools, Re
 
 ## Target-machine qualification
 
-Check the machine first:
+Check the machine and actual inference path:
 
 ```bash
 npm run qualify:doctor
@@ -18,42 +18,14 @@ Then run strict Ollama qualification:
 npm run qualify
 ```
 
-The doctor checks Node 22+, Ollama reachability/version, and the exact `qwen3:4b` model tag.
+For governed control stages, PhiBot explicitly disables model thinking, bounds JSON generation, and keeps the local model warm between stages.
 
-Qualification automatically records the current Git commit when available and writes a hashed PASS/FAIL evidence pack.
-
-## Complete governed path
-
-```text
-Vessie
-  |
-recurring evidence
-  |
-least-authority spawn
-  |
-PhiOS Service
-  |
-NBG memory
-  |
-CommonLine crew
-  |
-local provider
-  |
-Reality Gate
-  |
-governed tool
-  |
-ledger
-  |
-dissolve / retain
-  |
-qualification evidence
-```
-
-## Service mode
+Default live provider timeout is 120 seconds per stage. An override is available for diagnostics:
 
 ```bash
-npm run service -- --manifest bots/examples/local-scout.phibot.json
+npm run qualify -- --ollama-timeout-ms 180000
 ```
+
+Qualification records the current Git commit, preflight/inference readiness, provider timeout, and hashed PASS/FAIL evidence.
 
 See [docs/FIELD_QUALIFICATION.md](docs/FIELD_QUALIFICATION.md), [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), and [docs/ROADMAP.md](docs/ROADMAP.md).

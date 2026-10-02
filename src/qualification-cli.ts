@@ -8,6 +8,7 @@ interface Args {
   mode: AcceptanceProviderMode;
   outputDir?: string;
   ollamaHost?: string;
+  ollamaTimeoutMs?: number;
   sourceCommit?: string;
 }
 
@@ -21,6 +22,17 @@ function requireValue(
     throw new Error(`${flag} requires a value.`);
   }
   return value;
+}
+
+function positiveInteger(
+  value: string,
+  flag: string,
+): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`${flag} must be a positive integer.`);
+  }
+  return parsed;
 }
 
 function defaultOutputDir(): string {
@@ -67,6 +79,11 @@ function parseArgs(argv: string[]): Args {
       );
     } else if (value === "--ollama-host") {
       args.ollamaHost = requireValue(argv, ++index, "--ollama-host");
+    } else if (value === "--ollama-timeout-ms") {
+      args.ollamaTimeoutMs = positiveInteger(
+        requireValue(argv, ++index, "--ollama-timeout-ms"),
+        "--ollama-timeout-ms",
+      );
     } else if (value === "--source-commit") {
       args.sourceCommit = requireValue(argv, ++index, "--source-commit");
     } else if (value !== undefined) {
@@ -88,6 +105,9 @@ async function main(): Promise<void> {
     ...(args.ollamaHost === undefined
       ? {}
       : { ollamaHost: args.ollamaHost }),
+    ...(args.ollamaTimeoutMs === undefined
+      ? {}
+      : { ollamaTimeoutMs: args.ollamaTimeoutMs }),
     ...(sourceCommit === undefined
       ? {}
       : { sourceCommit }),
@@ -101,6 +121,8 @@ async function main(): Promise<void> {
         providerMode: result.record.environment.providerMode,
         sourceCommit:
           result.record.environment.sourceCommit ?? null,
+        ollamaTimeoutMs:
+          result.record.environment.ollamaTimeoutMs ?? null,
         preflightPassed: result.record.preflight.passed,
         preflightChecks: result.record.preflight.checks,
         outputDir,
