@@ -281,6 +281,17 @@ export class SpawnGovernor {
       }
     }
 
+    let approvalId: string | undefined;
+    if (proposal.lifetime === "persistent") {
+      if (!approval) {
+        throw new Error("Persistent PhiBot spawn requires explicit approval.");
+      }
+      this.verifyApproval(proposal, approval);
+      approvalId = approval.approvalId;
+    } else if (approval !== undefined) {
+      throw new Error("Ephemeral PhiBot spawn does not accept persistent approval.");
+    }
+
     const proposalConsumed = await this.service.replayStore.consume(
       `spawn-proposal:${proposal.proposalId}`,
     );
@@ -288,21 +299,13 @@ export class SpawnGovernor {
       throw new Error("Spawn proposal replay detected.");
     }
 
-    let approvalId: string | undefined;
-    if (proposal.lifetime === "persistent") {
-      if (!approval) {
-        throw new Error("Persistent PhiBot spawn requires explicit approval.");
-      }
-      this.verifyApproval(proposal, approval);
-      const consumed = await this.service.replayStore.consume(
+    if (approval !== undefined) {
+      const approvalConsumed = await this.service.replayStore.consume(
         `spawn:${approval.approvalId}`,
       );
-      if (!consumed) {
+      if (!approvalConsumed) {
         throw new Error("Spawn approval replay detected.");
       }
-      approvalId = approval.approvalId;
-    } else if (approval !== undefined) {
-      throw new Error("Ephemeral PhiBot spawn does not accept persistent approval.");
     }
 
     await this.service.registerBot(proposal.manifest);
