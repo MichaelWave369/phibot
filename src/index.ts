@@ -2,6 +2,33 @@ export { DryRunAdapter } from "./adapters/dry-run.js";
 export type { PhiBotAdapter } from "./adapters/dry-run.js";
 export { ProviderBackedAdapter, parseProviderPayload } from "./adapters/provider-backed.js";
 export {
+  CommonLine,
+  DEFAULT_GROUP_TTL_MS,
+  MAX_GROUP_TTL_MS,
+} from "./commonline/commonline.js";
+export type { CommonLineOptions } from "./commonline/commonline.js";
+export {
+  MemoryCommonLineGroupStore,
+} from "./commonline/groups.js";
+export type { CommonLineGroupStore } from "./commonline/groups.js";
+export {
+  MemoryCommonLineTransport,
+} from "./commonline/transport.js";
+export type { CommonLineTransport } from "./commonline/transport.js";
+export type {
+  CommonLineAddress,
+  CommonLineCoordinatorInput,
+  CommonLineEnvelope,
+  CommonLineGroup,
+  CommonLineGroupSendInput,
+  CommonLineHandoffInput,
+  CommonLineMessageKind,
+  CommonLinePayload,
+  CommonLineSendInput,
+  CommonLineSender,
+  CreateGroupInput,
+} from "./commonline/types.js";
+export {
   evaluateAuthority,
   evaluateAuthorityMode,
   evaluateManifestAuthority,
