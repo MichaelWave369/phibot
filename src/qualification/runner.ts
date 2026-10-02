@@ -8,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { join, relative, resolve, sep } from "node:path";
 import { runAcceptanceScenario } from "../acceptance/scenario.js";
+import { runQualificationDoctor } from "./doctor.js";
 import type {
   QualificationArtifact,
   QualificationFailure,
@@ -91,6 +92,15 @@ function failureFrom(error: unknown): QualificationFailure {
   };
 }
 
+function preflightFailureMessage(
+  checks: Array<{ status: string; detail: string }>,
+): string {
+  return checks
+    .filter((item) => item.status === "fail")
+    .map((item) => item.detail)
+    .join(" | ");
+}
+
 export async function runFieldQualification(
   options: QualificationOptions,
 ): Promise<QualificationResult> {
@@ -102,21 +112,44 @@ export async function runFieldQualification(
   const clock = options.now ?? Date.now;
   const startedAt = new Date(clock()).toISOString();
 
+  const preflight = await runQualificationDoctor({
+    mode,
+    ...(options.ollamaHost === undefined
+      ? {}
+      : { ollamaHost: options.ollamaHost }),
+    ...(options.requiredModel === undefined
+      ? {}
+      : { requiredModel: options.requiredModel }),
+    ...(options.fetchImpl === undefined
+      ? {}
+      : { fetchImpl: options.fetchImpl }),
+    now: clock,
+  });
+
   let acceptance;
   let failure: QualificationFailure | undefined;
 
-  try {
-    acceptance = await runAcceptanceScenario({
-      stateDir: runtimeStateDir,
-      mode,
-      ...(options.ollamaHost === undefined
-        ? {}
-        : { ollamaHost: options.ollamaHost }),
-      ...(options.secret === undefined ? {} : { secret: options.secret }),
-      now: clock,
-    });
-  } catch (error: unknown) {
-    failure = failureFrom(error);
+  if (!preflight.passed) {
+    failure = {
+      name: "QualificationPreflightError",
+      message:
+        preflightFailureMessage(preflight.checks) ||
+        "Qualification preflight failed.",
+    };
+  } else {
+    try {
+      acceptance = await runAcceptanceScenario({
+        stateDir: runtimeStateDir,
+        mode,
+        ...(options.ollamaHost === undefined
+          ? {}
+          : { ollamaHost: options.ollamaHost }),
+        ...(options.secret === undefined ? {} : { secret: options.secret }),
+        now: clock,
+      });
+    } catch (error: unknown) {
+      failure = failureFrom(error);
+    }
   }
 
   const artifacts = await collectArtifacts(runtimeStateDir);
@@ -128,9 +161,9 @@ export async function runFieldQualification(
     platform: process.platform,
     arch: process.arch,
     providerMode: mode,
-    ...(options.ollamaHost === undefined
+    ...(preflight.ollamaHost === undefined
       ? {}
-      : { ollamaHost: options.ollamaHost }),
+      : { ollamaHost: preflight.ollamaHost }),
     ...(options.sourceCommit === undefined
       ? {}
       : { sourceCommit: options.sourceCommit }),
@@ -143,6 +176,7 @@ export async function runFieldQualification(
     startedAt,
     finishedAt: new Date(clock()).toISOString(),
     environment,
+    preflight,
     runtimeStateDir,
     ...(acceptance === undefined ? {} : { acceptance }),
     ...(failure === undefined ? {} : { failure }),
