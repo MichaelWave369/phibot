@@ -81,10 +81,24 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 7 - Governed PhiBot spawning
 
-- [ ] governed spawn proposal
-- [ ] least-authority template
-- [ ] ephemeral/persistent lifetime
-- [ ] recurring-pattern evidence
-- [ ] approval for persistent authority
-- [ ] automatic temporary CommonLine crew
-- [ ] spawn/dissolve receipt chain
+- [x] governed spawn proposal
+- [x] least-authority templates
+- [x] recurring-pattern evidence threshold
+- [x] ephemeral / persistent lifetime
+- [x] signed one-use approval for persistent bots
+- [x] durable approval replay protection
+- [x] automatic temporary CommonLine crew
+- [x] Vessie coordinator notification
+- [x] durable spawn records
+- [x] expiry sweep and dissolution
+- [x] spawn / dissolve receipt chain
+- [x] PhiOS status events
+
+## Next integration track
+
+- [ ] PhiOS-native process isolation
+- [ ] PhiOS-native key custody
+- [ ] PhiOS-native IPC adapter
+- [ ] connect standalone CommonLine transport
+- [ ] connect Vessie spawn-policy UI
+- [ ] end-to-end local Ollama crew acceptance test

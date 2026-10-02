@@ -15,7 +15,8 @@ export type ReceiptStage =
   | "gate"
   | "memory"
   | "message"
-  | "service";
+  | "service"
+  | "spawn";
 
 export interface PhiBotManifest {
   id: string;

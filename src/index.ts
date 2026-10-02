@@ -9,7 +9,10 @@ export {
 export type { CommonLineOptions } from "./commonline/commonline.js";
 export { MemoryCommonLineGroupStore } from "./commonline/groups.js";
 export type { CommonLineGroupStore } from "./commonline/groups.js";
-export { MemoryCommonLineTransport } from "./commonline/transport.js";
+export {
+  MemoryCommonLineTransport,
+  compareMessages,
+} from "./commonline/transport.js";
 export type { CommonLineTransport } from "./commonline/transport.js";
 export type {
   CommonLineAddress,
@@ -124,6 +127,36 @@ export type {
   RunBudgetUsage,
   ServiceLifecycle,
 } from "./service/types.js";
+export {
+  digestSpawnManifest,
+  signSpawnApproval,
+  verifySpawnApprovalSignature,
+} from "./spawn/crypto.js";
+export {
+  DEFAULT_SPAWN_POLICY,
+  SpawnGovernor,
+} from "./spawn/governor.js";
+export type { SpawnGovernorOptions } from "./spawn/governor.js";
+export {
+  FileSpawnStore,
+  MemorySpawnStore,
+} from "./spawn/store.js";
+export type { SpawnStore } from "./spawn/store.js";
+export {
+  SpawnTemplateRegistry,
+  createDefaultSpawnTemplates,
+} from "./spawn/templates.js";
+export type {
+  SpawnApproval,
+  SpawnCapability,
+  SpawnEvidence,
+  SpawnLifetime,
+  SpawnPolicy,
+  SpawnProposal,
+  SpawnProposalInput,
+  SpawnRecord,
+  SpawnTemplate,
+} from "./spawn/types.js";
 export {
   addCapability,
   createBuiltinToolRegistry,
