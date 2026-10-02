@@ -2,14 +2,14 @@
 
 **PhiBot** is a governed micro-agent runtime and local agent-service layer inspired by Vessie / PhiVessel.
 
-Small specialist agents get explicit identity, bounded authority, local model providers, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable service state, and governed spawning.
+Small specialist agents get explicit identity, bounded authority, local model providers, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable service state, governed spawning, and a full-lifecycle acceptance harness.
 
-## The full ladder
+## The complete governed path
 
 ```text
 Vessie
   |
-pattern evidence
+recurring evidence
   |
 spawn proposal
   |
@@ -17,29 +17,38 @@ least-authority PhiBot
   |
 PhiOS Service
   |
+NBG memory
+  |
 CommonLine crew
   |
-NBG memory
+provider-backed vessel loop
   |
 Reality Gate
   |
-governed tools
+governed tool
   |
 ledger
+  |
+dissolve / retain
 ```
 
-## Governed spawning
+## Acceptance
 
-Vessie can propose a specialist only after recurring-pattern evidence reaches policy threshold.
+Run the deterministic full lifecycle:
 
-Ephemeral bots:
+```bash
+npm run acceptance
+```
 
-- use least-authority templates
-- expire automatically
-- form temporary CommonLine crews
-- dissolve with receipts
+Run against a real local Ollama model:
 
-Persistent bots additionally require a signed, short-lived, one-use approval bound to the exact generated manifest.
+```bash
+ollama serve
+ollama pull qwen3:4b
+npm run acceptance -- --mode ollama
+```
+
+Live Ollama mode is strict: it does not fall back to the deterministic provider.
 
 ## Service mode
 
@@ -55,4 +64,4 @@ http://127.0.0.1:7369/bots
 http://127.0.0.1:7369/events
 ```
 
-See [docs/SPAWNING.md](docs/SPAWNING.md), [docs/SERVICE.md](docs/SERVICE.md), [docs/COMMONLINE.md](docs/COMMONLINE.md), [docs/MEMORY.md](docs/MEMORY.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), [docs/SPAWNING.md](docs/SPAWNING.md), [docs/SERVICE.md](docs/SERVICE.md), [docs/COMMONLINE.md](docs/COMMONLINE.md), [docs/MEMORY.md](docs/MEMORY.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
