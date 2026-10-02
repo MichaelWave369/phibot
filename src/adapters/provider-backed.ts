@@ -111,6 +111,12 @@ function trace(completion: ProviderCompletion): ProviderTrace {
     ...(completion.metrics.loadDurationMs === undefined
       ? {}
       : { loadDurationMs: completion.metrics.loadDurationMs }),
+    ...(completion.metrics.attempts === undefined
+      ? {}
+      : { attempts: completion.metrics.attempts }),
+    ...(completion.metrics.retryReason === undefined
+      ? {}
+      : { retryReason: completion.metrics.retryReason }),
     ...(completion.fallbackReason === undefined
       ? {}
       : { fallbackReason: completion.fallbackReason }),

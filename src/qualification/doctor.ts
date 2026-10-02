@@ -1,4 +1,7 @@
+import { parseProviderPayload } from "../adapters/provider-backed.js";
 import type { AcceptanceProviderMode } from "../acceptance/types.js";
+import { OllamaProvider } from "../providers/ollama.js";
+import type { ProviderRequest } from "../providers/types.js";
 import type {
   QualificationPreflight,
   QualificationPreflightCheck,
@@ -38,19 +41,15 @@ async function fetchJson(
   fetchImpl: typeof fetch,
   url: string,
   timeoutMs: number,
-  init: RequestInit = {},
 ): Promise<unknown> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetchImpl(url, {
-      ...init,
+      method: "GET",
       signal: controller.signal,
-      headers: {
-        accept: "application/json",
-        ...(init.headers ?? {}),
-      },
+      headers: { accept: "application/json" },
     });
 
     if (!response.ok) {
@@ -72,6 +71,42 @@ function check(
     name,
     status: passed ? "pass" : "fail",
     detail,
+  };
+}
+
+function providerProbeRequest(model: string): ProviderRequest {
+  return {
+    stage: "observe",
+    manifest: {
+      id: "qualification-probe",
+      name: "Qualification Probe",
+      version: "1.0.0",
+      role: "qualification_probe",
+      description:
+        "Bounded representative probe for the PhiBot governed provider contract.",
+      model: { provider: "ollama", name: model },
+      memory: { scope: "task", maxDepth: 2 },
+      capabilities: ["repo.read", "repo.patch", "tests.run"],
+      authority: {
+        read: true,
+        propose: true,
+        write: "gated",
+        deploy: false,
+      },
+      escalation: {
+        target: "vessie",
+        confidenceBelow: 0.7,
+      },
+    },
+    input: {
+      task:
+        "Inspect a bounded README repair fixture and summarize the safest next action.",
+      context: {
+        taskId: "qualification-probe",
+        memoryPacketId: "probe-packet",
+      },
+    },
+    prior: [],
   };
 }
 
@@ -114,6 +149,8 @@ export async function runQualificationDoctor(
   const inferenceTimeoutMs = options.inferenceTimeoutMs ?? 60_000;
   let ollamaVersion: string | undefined;
   let inferenceLatencyMs: number | undefined;
+  let inferenceAttempts: number | undefined;
+  let inferenceRetryReason: string | undefined;
 
   try {
     const versionBody = (await fetchJson(
@@ -195,68 +232,38 @@ export async function runQualificationDoctor(
     checks.find((item) => item.name === "ollama.model")?.status === "pass";
 
   if (modelReady) {
-    const started = Date.now();
+    const provider = new OllamaProvider(requiredModel, {
+      baseUrl: host,
+      timeoutMs: inferenceTimeoutMs,
+      fetchImpl,
+      think: false,
+      keepAlive: "10m",
+      numPredict: 160,
+      repeatRecovery: true,
+    });
+
     try {
-      const body = (await fetchJson(
-        fetchImpl,
-        `${host}/api/chat`,
-        inferenceTimeoutMs,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            model: requiredModel,
-            stream: false,
-            format: "json",
-            think: false,
-            keep_alive: "10m",
-            messages: [
-              {
-                role: "user",
-                content:
-                  'Return exactly this JSON object and nothing else: {"ok":true}',
-              },
-            ],
-            options: {
-              temperature: 0,
-              num_predict: 32,
-            },
-          }),
-        },
-      )) as {
-        message?: { content?: unknown };
-      };
-
-      inferenceLatencyMs = Date.now() - started;
-      const content =
-        typeof body.message?.content === "string"
-          ? body.message.content
-          : "";
-      let valid = false;
-
-      try {
-        const parsed = JSON.parse(content) as { ok?: unknown };
-        valid = parsed.ok === true;
-      } catch {
-        valid = false;
-      }
+      const completion = await provider.complete(
+        providerProbeRequest(requiredModel),
+      );
+      parseProviderPayload(completion.content);
+      inferenceLatencyMs = completion.metrics.latencyMs;
+      inferenceAttempts = completion.metrics.attempts ?? 1;
+      inferenceRetryReason = completion.metrics.retryReason;
 
       checks.push(
         check(
           "ollama.inference",
-          valid,
-          valid
-            ? `Model completed bounded no-think JSON probe in ${inferenceLatencyMs}ms.`
-            : "Model responded, but bounded JSON probe did not satisfy the contract.",
+          true,
+          `Representative governed provider probe completed in ${inferenceLatencyMs}ms over ${inferenceAttempts} attempt(s)${inferenceRetryReason ? `; recovered from ${inferenceRetryReason}` : ""}.`,
         ),
       );
     } catch (error: unknown) {
-      inferenceLatencyMs = Date.now() - started;
       checks.push(
         check(
           "ollama.inference",
           false,
-          `Model inference probe failed after ${inferenceLatencyMs}ms: ${error instanceof Error ? error.message : String(error)}`,
+          `Representative governed provider probe failed: ${error instanceof Error ? error.message : String(error)}`,
         ),
       );
     }
@@ -280,6 +287,12 @@ export async function runQualificationDoctor(
     ...(inferenceLatencyMs === undefined
       ? {}
       : { inferenceLatencyMs }),
+    ...(inferenceAttempts === undefined
+      ? {}
+      : { inferenceAttempts }),
+    ...(inferenceRetryReason === undefined
+      ? {}
+      : { inferenceRetryReason }),
     availableModels,
     checks,
     passed: checks.every((item) => item.status === "pass"),

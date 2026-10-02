@@ -26,6 +26,8 @@ export interface QualificationPreflight {
   requiredModel?: string;
   ollamaVersion?: string;
   inferenceLatencyMs?: number;
+  inferenceAttempts?: number;
+  inferenceRetryReason?: string;
   availableModels: string[];
   checks: QualificationPreflightCheck[];
   passed: boolean;

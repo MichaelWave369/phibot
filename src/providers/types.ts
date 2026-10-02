@@ -19,6 +19,8 @@ export interface ProviderMetrics {
   totalTokens?: number;
   providerDurationMs?: number;
   loadDurationMs?: number;
+  attempts?: number;
+  retryReason?: string;
 }
 
 export interface ProviderCompletion {

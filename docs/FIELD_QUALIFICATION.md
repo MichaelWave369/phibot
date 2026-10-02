@@ -1,97 +1,92 @@
 # PhiBot Field Qualification
 
-The deterministic end-to-end acceptance harness proves the architecture integrates. Field qualification proves the same lifecycle on the target machine with its actual local Ollama provider.
+Field qualification proves the complete governed lifecycle on the target machine with its actual local Ollama provider.
 
-## Qualification doctor
+## What the field runs taught us
 
-Run:
+The first live run exposed a 60-second inference timeout.
+
+The second run proved the no-think path was fast, then exposed Ollama's `prediction aborted, token repeat limit reached` failure during a real governed stage.
+
+Recent Ollama reports describe this as output degeneration/repetition, and newer releases surface the repeat guard as an HTTP 500.
+
+PhiBot now handles that boundary explicitly instead of hiding it.
+
+## Governed structured-output profile
+
+PhiBot uses an actual JSON Schema through Ollama's `format` field rather than generic JSON mode.
+
+Normal attempt:
+
+```text
+think          false
+format         PhiBot stage JSON Schema
+temperature    0
+num_predict    160
+keep_alive     10m
+```
+
+If and only if Ollama returns HTTP 500 containing:
+
+```text
+token repeat limit reached
+```
+
+PhiBot retries exactly once with:
+
+```text
+temperature    0.2
+repeat_penalty 1.1
+repeat_last_n  64
+```
+
+Every other error still fails immediately.
+
+The retry is recorded in provider metrics as:
+
+```text
+attempts     2
+retryReason token_repeat_limit
+```
+
+## Representative qualification doctor
 
 ```bash
 npm run qualify:doctor
 ```
 
-The doctor now verifies four things:
+The doctor now exercises the actual PhiBot provider contract:
 
-- Node major version is at least 22
-- Ollama is reachable
-- exact `qwen3:4b` model tag is installed
-- the model can actually complete a tiny bounded JSON inference request
+- same provider class
+- same structured schema
+- same no-think profile
+- same bounded generation
+- same repeat-limit recovery
 
-The inference probe uses the same governed response posture as PhiBot:
+That closes the gap where a toy JSON probe could pass while a real governed stage failed.
 
-- `think: false`
-- JSON mode
-- temperature 0
-- bounded output
-- `keep_alive: 10m`
-
-That last check matters: seeing a model in `/api/tags` proves it exists, not that it can respond.
-
-## Governed Ollama request profile
-
-PhiBot control-stage requests are intentionally small. They do not need extended model reasoning.
-
-The provider therefore defaults to:
-
-```text
-think        false
-format       json
-temperature  0
-num_predict  256
-keep_alive   10m
-```
-
-This keeps Qwen3 from spending the control-plane budget on hidden reasoning before returning a tiny JSON receipt.
-
-The live acceptance timeout is now 120 seconds per provider stage by default and is written into the qualification record.
-
-Override only when diagnosing unusually slow hardware:
-
-```bash
-npm run qualify -- --ollama-timeout-ms 180000
-```
-
-## Qualification command
+## Run qualification
 
 ```bash
 npm run qualify
 ```
 
-The CLI:
+Default provider timeout remains 120 seconds per attempt.
 
-1. performs doctor preflight
-2. warms the model with the bounded inference probe
-3. automatically binds the current Git commit
-4. runs strict Ollama full-lifecycle acceptance
-5. writes hashed PASS or FAIL evidence
+For diagnostics only:
+
+```bash
+npm run qualify -- --ollama-timeout-ms 180000
+```
 
 There is no deterministic fallback in live qualification.
 
-## Evidence pack
+## Evidence
+
+PASS and FAIL records remain preserved beneath:
 
 ```text
 .phibot/qualification/<timestamp>/
-├── qualification.json
-├── qualification.sha256
-└── runtime/
-    ├── registry.json
-    ├── ledger.ndjson
-    ├── replay/
-    ├── memory/
-    ├── commonline/
-    └── spawns/
 ```
 
-The record includes preflight results, inference-probe latency, provider timeout, source commit, acceptance result, and SHA-256 metadata for durable runtime artifacts.
-
-## Interpreting a timeout
-
-A provider timeout is a field qualification failure, not proof that the architecture is broken.
-
-The evidence pack separates:
-
-- daemon/model discovery
-- actual inference readiness
-- governed lifecycle execution
-
-That lets the next repair target the failing boundary instead of weakening unrelated governance checks.
+Keep every failed field pack. They document which boundary failed and are part of the qualification history, not disposable noise.
