@@ -65,17 +65,26 @@ The roadmap is rung-based. Each rung should remain runnable before the next one 
 
 ## Rung 6 - PhiOS service
 
-- [ ] daemon/service wrapper
-- [ ] local bot registry
-- [ ] process/resource budgets
-- [ ] UI status events
-- [ ] governed bot spawning
-- [ ] durable replay store / platform key custody
-- [ ] durable NBG memory store
-- [ ] durable CommonLine transport
+- [x] daemon/service wrapper
+- [x] persistent local bot registry
+- [x] run concurrency/rate budgets
+- [x] provider-token/tool-call budgets
+- [x] UI/status event stream
+- [x] loopback-only read-only status HTTP
+- [x] durable Reality Gate replay store
+- [x] durable NBG memory store
+- [x] durable CommonLine transport/groups
+- [x] append-only service ledger
+- [ ] PhiOS-native process isolation
+- [ ] PhiOS-native key custody
+- [ ] PhiOS-native IPC adapter
 
-## Rung 7 - PhiBot spawning
+## Rung 7 - Governed PhiBot spawning
 
-Vessie may propose a new bot when a recurring work pattern is detected. Spawning creates a manifest from a governed template, assigns minimum capabilities, and requires approval for persistent authority.
-
-Ephemeral bots should be able to dissolve after completing their bounded task.
+- [ ] governed spawn proposal
+- [ ] least-authority template
+- [ ] ephemeral/persistent lifetime
+- [ ] recurring-pattern evidence
+- [ ] approval for persistent authority
+- [ ] automatic temporary CommonLine crew
+- [ ] spawn/dissolve receipt chain
