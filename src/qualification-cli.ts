@@ -1,0 +1,103 @@
+#!/usr/bin/env node
+import { resolve } from "node:path";
+import { runFieldQualification } from "./qualification/runner.js";
+import type { AcceptanceProviderMode } from "./acceptance/types.js";
+
+interface Args {
+  mode: AcceptanceProviderMode;
+  outputDir?: string;
+  ollamaHost?: string;
+  sourceCommit?: string;
+}
+
+function requireValue(
+  argv: string[],
+  index: number,
+  flag: string,
+): string {
+  const value = argv[index];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(`${flag} requires a value.`);
+  }
+  return value;
+}
+
+function defaultOutputDir(): string {
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-");
+  return resolve(".phibot", "qualification", stamp);
+}
+
+function parseArgs(argv: string[]): Args {
+  const args: Args = {
+    mode: "ollama",
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+
+    if (value === "--mode") {
+      const mode = requireValue(argv, ++index, "--mode");
+      if (mode !== "ollama" && mode !== "deterministic") {
+        throw new Error("--mode must be ollama or deterministic.");
+      }
+      args.mode = mode;
+    } else if (value === "--output-dir") {
+      args.outputDir = resolve(
+        requireValue(argv, ++index, "--output-dir"),
+      );
+    } else if (value === "--ollama-host") {
+      args.ollamaHost = requireValue(argv, ++index, "--ollama-host");
+    } else if (value === "--source-commit") {
+      args.sourceCommit = requireValue(argv, ++index, "--source-commit");
+    } else if (value !== undefined) {
+      throw new Error(`Unknown qualification argument: ${value}`);
+    }
+  }
+
+  return args;
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2));
+  const outputDir = args.outputDir ?? defaultOutputDir();
+
+  const result = await runFieldQualification({
+    outputDir,
+    mode: args.mode,
+    ...(args.ollamaHost === undefined
+      ? {}
+      : { ollamaHost: args.ollamaHost }),
+    ...(args.sourceCommit === undefined
+      ? {}
+      : { sourceCommit: args.sourceCommit }),
+  });
+
+  console.log(
+    JSON.stringify(
+      {
+        status: result.record.status,
+        qualificationId: result.record.qualificationId,
+        providerMode: result.record.environment.providerMode,
+        outputDir,
+        recordPath: result.recordPath,
+        digestPath: result.digestPath,
+        recordSha256: result.recordSha256,
+        acceptancePassed: result.record.acceptance?.passed ?? false,
+        failure: result.record.failure ?? null,
+      },
+      null,
+      2,
+    ),
+  );
+
+  if (result.record.status !== "PASS") {
+    process.exitCode = 2;
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

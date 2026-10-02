@@ -1,6 +1,6 @@
 # PhiBot Roadmap
 
-The initial rung ladder is complete. Work now moves through integration and acceptance tracks.
+The initial rung ladder is complete. Work now moves through integration and qualification tracks.
 
 ## Rung 0 - Bootstrap
 
@@ -94,15 +94,19 @@ The initial rung ladder is complete. Work now moves through integration and acce
 - [x] spawn / dissolve receipt chain
 - [x] PhiOS status events
 
-## Acceptance track
+## Acceptance and qualification track
 
 - [x] deterministic full-lifecycle acceptance harness
 - [x] spawn -> NBG -> CommonLine -> provider -> Gate -> tool -> dissolve
 - [x] receipt-chain acceptance assertion
 - [x] resource-budget acceptance assertion
 - [x] Reality Gate replay rejection assertion
-- [x] local Ollama strict acceptance mode
-- [ ] run and record live Ollama acceptance on target machine
+- [x] strict local Ollama acceptance mode
+- [x] field qualification evidence-pack writer
+- [x] SHA-256 artifact manifest + detached record digest
+- [x] FAIL records preserve available evidence
+- [x] overwrite protection for qualification destinations
+- [ ] run and preserve PASS qualification on target Ollama machine
 
 ## PhiOS integration track
 

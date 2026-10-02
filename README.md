@@ -2,7 +2,7 @@
 
 **PhiBot** is a governed micro-agent runtime and local agent-service layer inspired by Vessie / PhiVessel.
 
-Small specialist agents get explicit identity, bounded authority, local model providers, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable service state, governed spawning, and a full-lifecycle acceptance harness.
+Small specialist agents get explicit identity, bounded authority, local model providers, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable service state, governed spawning, full-lifecycle acceptance, and field qualification evidence.
 
 ## The complete governed path
 
@@ -34,13 +34,13 @@ dissolve / retain
 
 ## Acceptance
 
-Run the deterministic full lifecycle:
+Deterministic full lifecycle:
 
 ```bash
 npm run acceptance
 ```
 
-Run against a real local Ollama model:
+Strict local Ollama lifecycle:
 
 ```bash
 ollama serve
@@ -48,7 +48,21 @@ ollama pull qwen3:4b
 npm run acceptance -- --mode ollama
 ```
 
-Live Ollama mode is strict: it does not fall back to the deterministic provider.
+## Field qualification
+
+Produce a preserved PASS/FAIL evidence pack on the target machine:
+
+```bash
+npm run qualify
+```
+
+Optionally bind the record to a source commit:
+
+```bash
+npm run qualify -- --source-commit <git-commit-sha>
+```
+
+The pack includes a qualification record, detached SHA-256, and hashes for every durable runtime artifact.
 
 ## Service mode
 
@@ -64,4 +78,4 @@ http://127.0.0.1:7369/bots
 http://127.0.0.1:7369/events
 ```
 
-See [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), [docs/SPAWNING.md](docs/SPAWNING.md), [docs/SERVICE.md](docs/SERVICE.md), [docs/COMMONLINE.md](docs/COMMONLINE.md), [docs/MEMORY.md](docs/MEMORY.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/FIELD_QUALIFICATION.md](docs/FIELD_QUALIFICATION.md), [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), [docs/SPAWNING.md](docs/SPAWNING.md), [docs/SERVICE.md](docs/SERVICE.md), and [docs/ROADMAP.md](docs/ROADMAP.md).

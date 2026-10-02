@@ -1,3 +1,10 @@
+export { runAcceptanceScenario } from "./acceptance/scenario.js";
+export type {
+  AcceptanceChecks,
+  AcceptanceOptions,
+  AcceptanceProviderMode,
+  AcceptanceReport,
+} from "./acceptance/types.js";
 export { DryRunAdapter } from "./adapters/dry-run.js";
 export type { PhiBotAdapter } from "./adapters/dry-run.js";
 export { ProviderBackedAdapter, parseProviderPayload } from "./adapters/provider-backed.js";
@@ -99,6 +106,16 @@ export type {
   ProviderMetrics,
   ProviderRequest,
 } from "./providers/types.js";
+export { runFieldQualification } from "./qualification/runner.js";
+export type {
+  QualificationArtifact,
+  QualificationEnvironment,
+  QualificationFailure,
+  QualificationOptions,
+  QualificationRecord,
+  QualificationResult,
+  QualificationStatus,
+} from "./qualification/types.js";
 export {
   BudgetExceededError,
   DEFAULT_RESOURCE_BUDGETS,
