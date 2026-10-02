@@ -6,52 +6,53 @@ PhiBot is the governed micro-agent layer of the Phi ecosystem.
 
 > Capability is not authority.
 
-## Runtime model
+## Hosted shape
 
 ```text
-                         VESSIE
-                     coordinator
-                         ▲
-                         │ CommonLine
+                       PhiOS
                          │
+                  PhiBot Service
         ┌────────────────┼────────────────┐
         │                │                │
-     ScoutBot         PatchBot        MemoryBot
+   bot registry      budgets/events    durable state
         │                │                │
-        └──── typed messages / handoffs ──┘
-                         │
-                    NBG packets
-                         │
-                  nested memory
-                         │
- provider → proposal → capability registry
-                         │
-                  manifest authority
-                   /      |      \
-                allow    gate    deny
-                  │       │
-                  │   signed grant
-                  └── sandbox
-                         │
-                       ledger
+        │                │        replay / memory /
+        │                │          CommonLine
+        │                │
+     PhiBots ─────── CommonLine ─────── Vessie
+        │
+   NBG memory
+        │
+ capability registry
+        │
+ Reality Gate
+        │
+      tools
+        │
+      ledger
 ```
 
-## CommonLine
+## Service boundary
 
-PhiBots communicate with typed envelopes. Sender identity comes from the manifest, not message input.
+Rung 6 introduces a local service wrapper with persistent bot registration, resource accounting, UI-facing status events, durable local state adapters, and a loopback-only status API.
 
-Replies preserve thread lineage. Handoffs may include bounded NBG escalation packets. Temporary groups have explicit membership and expiry. Vessie uses a dedicated coordinator address.
+The service does not claim to replace PhiOS process isolation. Instead, it exposes stable seams PhiOS can wrap with native cgroups, namespaces, IPC, key custody, and stronger persistence.
 
-The current transport and group stores are in-process reference implementations. Later rungs may bind these seams to the standalone CommonLine service or PhiOS IPC.
+## Durable seams
 
-## NBG memory
+Filesystem implementations now exist for:
 
-Task bubbles sit inside bot bubbles. Information crosses scopes only through explicit promotion.
+- Reality Gate replay state
+- NBG memory
+- CommonLine messages
+- CommonLine groups
 
-## Reality Gate
+All implement the interfaces established in earlier rungs.
 
-Gated tool operations use short-lived one-use grants bound to the exact operation.
+## Resource budgets
 
-## Ledger
+Budgets constrain run concurrency/rate, provider tokens, and tool calls. They are runtime orchestration controls, not kernel resource controls.
 
-Reasoning, provider, tool, gate, memory, and CommonLine events share the append-only receipt schema.
+## HTTP
+
+The service HTTP surface is read-only and loopback-only in this rung.

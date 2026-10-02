@@ -7,13 +7,9 @@ export {
   MAX_GROUP_TTL_MS,
 } from "./commonline/commonline.js";
 export type { CommonLineOptions } from "./commonline/commonline.js";
-export {
-  MemoryCommonLineGroupStore,
-} from "./commonline/groups.js";
+export { MemoryCommonLineGroupStore } from "./commonline/groups.js";
 export type { CommonLineGroupStore } from "./commonline/groups.js";
-export {
-  MemoryCommonLineTransport,
-} from "./commonline/transport.js";
+export { MemoryCommonLineTransport } from "./commonline/transport.js";
 export type { CommonLineTransport } from "./commonline/transport.js";
 export type {
   CommonLineAddress,
@@ -100,6 +96,34 @@ export type {
   ProviderMetrics,
   ProviderRequest,
 } from "./providers/types.js";
+export {
+  BudgetExceededError,
+  DEFAULT_RESOURCE_BUDGETS,
+  ResourceBudgetManager,
+} from "./service/budget.js";
+export { ServiceEventBus } from "./service/events.js";
+export type { ServiceEventListener } from "./service/events.js";
+export { startPhiBotHttpServer } from "./service/http.js";
+export {
+  FileCommonLineGroupStore,
+  FileCommonLineTransport,
+  FileMemoryStore,
+  FileReplayStore,
+} from "./service/persistence.js";
+export { LocalBotRegistry } from "./service/registry.js";
+export { PhiBotService } from "./service/service.js";
+export type {
+  BotServiceState,
+  PhiBotServiceEvent,
+  PhiBotServiceEventType,
+  PhiBotServiceHttpOptions,
+  PhiBotServiceOptions,
+  PhiBotServiceSnapshot,
+  RegisteredBot,
+  ResourceBudgetConfig,
+  RunBudgetUsage,
+  ServiceLifecycle,
+} from "./service/types.js";
 export {
   addCapability,
   createBuiltinToolRegistry,
