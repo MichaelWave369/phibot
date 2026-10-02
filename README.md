@@ -1,54 +1,53 @@
 # PhiBot
 
-**PhiBot** is a governed micro-agent runtime inspired by the Vessie / PhiVessel architecture.
+**PhiBot** is a governed micro-agent runtime and local agent-service layer inspired by Vessie / PhiVessel.
 
-Small specialist agents get explicit identity, bounded authority, provider receipts, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable local service state, and an append-only ledger.
+Small specialist agents get explicit identity, bounded authority, local model providers, governed tools, a cryptographic Reality Gate, nested NBG memory, typed CommonLine communication, durable service state, and governed spawning.
 
-## Core loop
-
-```text
-observe -> interpret -> propose -> verify -> ledger
-```
-
-## Current stack
+## The full ladder
 
 ```text
-                          PhiOS
-                            │
-                      PhiBot Service
-                 /          |          \
-           registry      budgets      events
-              │             │           │
-         PhiBot crew ─── CommonLine ── Vessie
-              │
-          NBG memory
-              │
-        Reality Gate
-              │
-        governed tools
-              │
-            ledger
+Vessie
+  |
+pattern evidence
+  |
+spawn proposal
+  |
+least-authority PhiBot
+  |
+PhiOS Service
+  |
+CommonLine crew
+  |
+NBG memory
+  |
+Reality Gate
+  |
+governed tools
+  |
+ledger
 ```
 
-## Rung 6 service mode
+## Governed spawning
 
-PhiBot can now run as a loopback local service with:
+Vessie can propose a specialist only after recurring-pattern evidence reaches policy threshold.
 
-- persistent bot registry
-- resource budgets
-- UI/status events
-- durable Reality Gate replay state
-- durable NBG memory
-- durable CommonLine messages/groups
-- read-only local status endpoints
+Ephemeral bots:
 
-Start it:
+- use least-authority templates
+- expire automatically
+- form temporary CommonLine crews
+- dissolve with receipts
+
+Persistent bots additionally require a signed, short-lived, one-use approval bound to the exact generated manifest.
+
+## Service mode
 
 ```bash
 npm run service -- --manifest bots/examples/local-scout.phibot.json
 ```
 
-Default status surface:
+Default local status surface:
 
 ```text
 http://127.0.0.1:7369/health
@@ -56,6 +55,4 @@ http://127.0.0.1:7369/bots
 http://127.0.0.1:7369/events
 ```
 
-The HTTP interface is intentionally loopback-only and mutation-free in this rung.
-
-See [docs/SERVICE.md](docs/SERVICE.md), [docs/COMMONLINE.md](docs/COMMONLINE.md), [docs/MEMORY.md](docs/MEMORY.md), and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [docs/SPAWNING.md](docs/SPAWNING.md), [docs/SERVICE.md](docs/SERVICE.md), [docs/COMMONLINE.md](docs/COMMONLINE.md), [docs/MEMORY.md](docs/MEMORY.md), and [docs/ROADMAP.md](docs/ROADMAP.md).

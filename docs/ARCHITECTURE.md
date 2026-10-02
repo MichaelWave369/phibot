@@ -6,53 +6,52 @@ PhiBot is the governed micro-agent layer of the Phi ecosystem.
 
 > Capability is not authority.
 
-## Hosted shape
+## Full governed crew shape
 
 ```text
-                       PhiOS
-                         │
-                  PhiBot Service
-        ┌────────────────┼────────────────┐
-        │                │                │
-   bot registry      budgets/events    durable state
-        │                │                │
-        │                │        replay / memory /
-        │                │          CommonLine
-        │                │
-     PhiBots ─────── CommonLine ─────── Vessie
-        │
-   NBG memory
-        │
- capability registry
-        │
- Reality Gate
-        │
-      tools
-        │
-      ledger
+                         VESSIE
+                    coordinator / governor
+                           |
+                 recurring-pattern evidence
+                           |
+                    spawn proposal
+                           |
+                least-authority template
+                           |
+              +------------+------------+
+              |                         |
+          ephemeral                  persistent
+              |                         |
+              |                  signed approval
+              +------------+------------+
+                           |
+                       PhiOS Service
+                           |
+                 registered PhiBot crew
+               /           |           \
+          ScoutBot      PatchBot      MemoryBot
+               \          |          /
+                    CommonLine
+                         |
+                     NBG memory
+                         |
+                    Reality Gate
+                         |
+                   governed tools
+                         |
+                       ledger
 ```
+
+## Spawning
+
+Rung 7 adds governed specialization.
+
+A proposal requires recurring-pattern evidence. Templates constrain capabilities and authority ceilings. The generated manifest receives only the requested capability subset and the authority classes those capabilities require.
+
+Ephemeral bots expire and can be swept automatically. Persistent bots require a signed, short-lived, one-use approval bound to the exact manifest digest.
+
+Spawned bots form temporary CommonLine crews and notify Vessie through the coordinator channel.
 
 ## Service boundary
 
-Rung 6 introduces a local service wrapper with persistent bot registration, resource accounting, UI-facing status events, durable local state adapters, and a loopback-only status API.
-
-The service does not claim to replace PhiOS process isolation. Instead, it exposes stable seams PhiOS can wrap with native cgroups, namespaces, IPC, key custody, and stronger persistence.
-
-## Durable seams
-
-Filesystem implementations now exist for:
-
-- Reality Gate replay state
-- NBG memory
-- CommonLine messages
-- CommonLine groups
-
-All implement the interfaces established in earlier rungs.
-
-## Resource budgets
-
-Budgets constrain run concurrency/rate, provider tokens, and tool calls. They are runtime orchestration controls, not kernel resource controls.
-
-## HTTP
-
-The service HTTP surface is read-only and loopback-only in this rung.
+The PhiBot service persists registry, memory, replay state, CommonLine state, spawn records, and ledger receipts. PhiOS-native isolation and key custody remain platform responsibilities.
