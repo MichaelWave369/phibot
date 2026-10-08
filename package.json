@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",

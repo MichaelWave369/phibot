@@ -2,14 +2,14 @@
 
 **Status: manual-only, review-only, no agent execution.** PHIBOT-09's public reader passes deterministic fixture tests. To establish that the real GitHub GET path is reachable and still matches FCW-03's exact published file formats, we need a live, reproducible run.
 
-After this PR is merged, go to **PhiBot → Actions → PhiBot Scout Public Field Qualification → Run workflow**, select **main**, and trigger it. The new workflow only supports manual \`workflow_dispatch\`; it never runs on schedule, push, or PR. No repository write permissions, checkout credentials, cache, background bot, provider model, or persistent artifact is involved.
+After this PR is merged, go to **PhiBot → Actions → PhiBot Scout Public Field Qualification → Run workflow**, select **main**, and trigger it. The new workflow only supports manual `workflow_dispatch`; it never runs on schedule, push, or PR. No repository write permissions, checkout credentials, cache, background bot, provider model, or persistent artifact is involved.
 
 The workflow compiles PhiBot, runs offline negative-control tests, and runs the exact PHIBOT-09 command using Node 22:
 
-\`\`\`bash
+```bash
 node dist/src/cloud-inspect-cli.js > "$RUNNER_TEMP/phi-cloud-public-review.json"
 node scripts/cloud-field-assert.mjs "$RUNNER_TEMP/phi-cloud-public-review.json"
-\`\`\`
+```
 
 The second script refuses malformed data, missing source-hash/GitHub-run checks, forged actor/task IDs, any claim of model execution, action authority or memory admission, future timestamps, stale receipts older than eight hours, and unknown fields that might smuggle instructions. It prints only a small qualification summary and SHA-256 digest of the temporary reviewed file, then the workflow deletes that file. The script deliberately never prints model text, task outputs, credentials, raw JSON, or private system information. The workflow does not publish source bytes.
 
@@ -19,9 +19,9 @@ A green manual qualification proves the **four real public GETs and the current 
 
 For local inspection without GitHub Actions:
 
-\`\`\`sh
+```sh
 npm run cloud:inspect
-\`\`\`
+```
 
 This remains a separate explicit operator action. All default CI tests remain offline and need no network access.
 
