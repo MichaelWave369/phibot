@@ -209,3 +209,6 @@ export type {
   StageResult,
   VesselStage,
 } from "./core/types.js";
+
+export { CLOUD_MISSION_SCHEMA, CLOUD_REPO, CLOUD_MISSION_ID, CLOUD_AGENT_REF, inspectCloudMission } from "./cloud/mission-evidence.js";
+export type { CloudMissionDisposition, CloudMissionReview } from "./cloud/mission-evidence.js";
