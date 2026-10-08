@@ -212,3 +212,6 @@ export type {
 
 export { CLOUD_MISSION_SCHEMA, CLOUD_REPO, CLOUD_MISSION_ID, CLOUD_AGENT_REF, inspectCloudMission } from "./cloud/mission-evidence.js";
 export type { CloudMissionDisposition, CloudMissionReview } from "./cloud/mission-evidence.js";
+
+export { PUBLIC_API, publicGitHubGet, inspectPublishedCloudScout } from "./cloud/public-acquisition.js";
+export type { CloudScoutPublicReview, PublicGet } from "./cloud/public-acquisition.js";

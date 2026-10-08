@@ -15,7 +15,8 @@
     "service": "npm run build --silent && node dist/src/service-cli.js",
     "acceptance": "npm run build --silent && node dist/src/acceptance-cli.js",
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
-    "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js"
+    "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
+    "cloud:inspect": "npm run build --silent && node dist/src/cloud-inspect-cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
