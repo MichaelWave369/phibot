@@ -32,3 +32,7 @@ PhiBot can now inspect an externally supplied fixed Scout observation receipt ge
 ## PHIBOT-09: Read the live cloud Scout evidence
 
 Run `npm run cloud:inspect` to perform one explicit, bounded, unauthenticated GitHub read of FieldCloudWorker's public Scout mission and parent status at one commit, then correlate the referenced GitHub Actions run. The returned record stays **unverified public evidence** and has no model, spawn, write, memory or routing authority. This is **not** a hosted PhiBot. See [PHIBOT-09](docs/CLOUD_PUBLIC_ACQUISITION.md).
+
+## PHIBOT-10: Manual cloud-read field qualification
+
+A new **manual-only** GitHub Actions workflow will run PHIBOT-09 against the real public CloudWorker receipts, then validate the redacted output with an explicit no-authority schema. It is **not** a PhiBot model/runtime field qualification. See [PHIBOT-10](docs/CLOUD_FIELD_QUALIFICATION.md). Offline negative controls also run in normal CI.

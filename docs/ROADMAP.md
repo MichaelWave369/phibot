@@ -47,3 +47,5 @@ The initial rung ladder is complete. Work now moves through integration and fiel
 - [ ] PHIBOT-09: opt-in bounded public GitHub read (candidate; manual post-merge verification required)
 - [ ] Qualify the live PhiBot process/Ollama on the operator's actual machine
 - [ ] Review human-approved remote-host policy, sandboxing and identity proof before deploying a real cloud PhiBot
+
+- [ ] PHIBOT-10: manual public CloudWorker live-read qualification; unverified and pending first operator-triggered Actions run
