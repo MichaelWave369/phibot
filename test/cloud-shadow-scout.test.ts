@@ -104,9 +104,9 @@ test("expired, not-healthy, forged actor and claimed authority refuse BEFORE pro
   for(const change of [
     (x: CloudScoutPublicReview)=>{x.review.disposition="STALE_UNVERIFIED_PUBLIC";},
     (x: CloudScoutPublicReview)=>{x.review.disposition="OBSERVED_ERROR_UNVERIFIED_PUBLIC";},
-    (x: CloudScoutPublicReview)=>{x.review.authority_granted=true;},
-    (x: CloudScoutPublicReview)=>{x.bot_spawned=true;},
-    (x: CloudScoutPublicReview)=>{x.review.agent_identity_ref="other-bot";},
+    (x: CloudScoutPublicReview)=>{(x.review as unknown as Record<string, unknown>).authority_granted=true;},
+    (x: CloudScoutPublicReview)=>{(x as unknown as Record<string, unknown>).bot_spawned=true;},
+    (x: CloudScoutPublicReview)=>{(x.review as unknown as Record<string, unknown>).agent_identity_ref="other-bot";},
     (x: CloudScoutPublicReview)=>{x.review.source_epistemic="TRUSTED" as never;},
   ]){
     const provider=new FakeProvider(),x=fixture();
