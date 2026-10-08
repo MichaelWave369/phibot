@@ -107,7 +107,7 @@ test("forged identity, task, extra fields and hash rejected",()=>{
 });
 test("rehashed but wrong declared task result still rejected against source",()=>{
   const {raw,mission}=fixture();
-  const forged={...mission,outcome:"OBSERVED_ERROR"};
+  const forged: Record<string, unknown> = {...mission,outcome:"OBSERVED_ERROR"};
   delete forged.receipt_sha256;
   forged.receipt_sha256=createHash("sha256").update(domain).update(canonical(forged)).digest("hex");
   assert.throws(()=>inspectCloudMission(forged,raw,baseTime),/TASK_OUTCOME/);
