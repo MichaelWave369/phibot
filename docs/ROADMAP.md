@@ -51,3 +51,5 @@ The initial rung ladder is complete. Work now moves through integration and fiel
 - [ ] PHIBOT-10: manual public CloudWorker live-read qualification; unverified and pending first operator-triggered Actions run
 
 - [ ] PHIBOT-11: local Scout shadow pilot; offline CI acceptance and target-machine Ollama qualification still required
+
+- [ ] PHIBOT-12: first operator-machine one-shot local Scout PASS evidence; requires real Ollama/field execution
