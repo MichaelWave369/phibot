@@ -112,8 +112,8 @@ test("wrong main ref, metadata identity, run commit or outcome rejected",async()
   await assert.rejects(()=>inspectPublishedCloudScout(a.get,NOW),/BRANCH/);
   const b=fixture();b.run.head_sha="f".repeat(40);
   await assert.rejects(()=>inspectPublishedCloudScout(b.get,NOW),/RUN_COMMIT_EVENT/);
-  const c=fixture();b.run.repository.full_name="hijacked/repo";
-  await assert.rejects(()=>inspectPublishedCloudScout(b.get,NOW),/RUN_IDENTITY/);
+  const c=fixture();c.run.repository.full_name="hijacked/repo";
+  await assert.rejects(()=>inspectPublishedCloudScout(c.get,NOW),/RUN_IDENTITY/);
   const d=fixture();d.run.conclusion="failure";
   await assert.rejects(()=>inspectPublishedCloudScout(d.get,NOW),/RUN_CONCLUSION/);
   const e=fixture();e.run.path=".github/workflows/evil.yml";
