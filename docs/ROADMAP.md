@@ -49,3 +49,5 @@ The initial rung ladder is complete. Work now moves through integration and fiel
 - [ ] Review human-approved remote-host policy, sandboxing and identity proof before deploying a real cloud PhiBot
 
 - [ ] PHIBOT-10: manual public CloudWorker live-read qualification; unverified and pending first operator-triggered Actions run
+
+- [ ] PHIBOT-11: local Scout shadow pilot; offline CI acceptance and target-machine Ollama qualification still required

@@ -36,3 +36,7 @@ Run `npm run cloud:inspect` to perform one explicit, bounded, unauthenticated Gi
 ## PHIBOT-10: Manual cloud-read field qualification
 
 A new **manual-only** GitHub Actions workflow will run PHIBOT-09 against the real public CloudWorker receipts, then validate the redacted output with an explicit no-authority schema. It is **not** a PhiBot model/runtime field qualification. See [PHIBOT-10](docs/CLOUD_FIELD_QUALIFICATION.md). Offline negative controls also run in normal CI.
+
+## PHIBOT-11: operator-only local Scout shadow reasoning
+
+`npm run scout:shadow -- --ack-unverified-public` explicitly retrieves the live public Scout evidence, verifies a fresh result, and runs **one local Ollama reasoning stage** inside the existing PhiBotRuntime. It has zero tools, memory admission, granted permissions, remote inference, or persistent bot spawning. See [PHIBOT-11](docs/LOCAL_SCOUT_SHADOW.md). No background agents are installed.
