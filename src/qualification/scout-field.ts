@@ -187,12 +187,42 @@ export function qualifyLocalScout(
 export async function saveScoutFieldPass(
   receipt: ScoutFieldPassReceipt, rootDir = ".phibot/scout-qualification"
 ): Promise<{ directory: string; sha256: string }> {
-  refuse(receipt.schema === "phibot.scout-local-qualification.v0.1" &&
+  refuse(exactly(receipt, [
+    "schema","result","qualified_at","execution_mode","source_mission_id","source_run_id",
+    "source_commit","source_status_sha256","source_observed_at","source_expires_at",
+    "source_disposition","model_provider","local_model","local_reasoning_stages",
+    "local_runtime_stages","public_read_requests","logical_model_calls",
+    "physical_model_attempts_not_independently_attested","tools_executed",
+    "output_contains_model_prose","public_source_authenticated",
+    "phibot_agent_identity_authenticated","phios_isolation_qualified",
+    "operator_approval_or_capability_granted","nbg_memory_admitted","remote_agent_deployed",
+    "evidence_class"
+  ]) &&
+    receipt.schema === "phibot.scout-local-qualification.v0.1" &&
     receipt.result === "PASS_LOCAL_SCOUT_SHADOW" &&
+    receipt.execution_mode === "OPERATOR_EXPLICIT_LOCAL_ONLY" &&
+    receipt.source_mission_id === "phibot.scout.public-repo-health.v1" &&
+    RUN.test(receipt.source_run_id) &&
+    SHA40.test(receipt.source_commit) && SHA64.test(receipt.source_status_sha256) &&
+    receipt.source_disposition === "OBSERVED_OK_UNVERIFIED_PUBLIC" &&
+    receipt.model_provider === "ollama" && MODEL.test(receipt.local_model) &&
+    receipt.local_reasoning_stages === 1 &&
+    receipt.local_runtime_stages === 4 &&
+    receipt.public_read_requests === 4 &&
+    receipt.logical_model_calls === 1 &&
+    receipt.physical_model_attempts_not_independently_attested === true &&
+    receipt.tools_executed === 0 &&
     receipt.output_contains_model_prose === false &&
+    receipt.public_source_authenticated === false &&
+    receipt.phibot_agent_identity_authenticated === false &&
+    receipt.phios_isolation_qualified === false &&
     receipt.operator_approval_or_capability_granted === false &&
     receipt.nbg_memory_admitted === false &&
-    receipt.remote_agent_deployed === false, "SAVE_SCOPE");
+    receipt.remote_agent_deployed === false &&
+    receipt.evidence_class === "OPERATOR_LOCAL_SELF_REPORTED_WITH_VALIDATED_FORMAT" &&
+    Number.isFinite(Date.parse(receipt.qualified_at)) &&
+    Number.isFinite(Date.parse(receipt.source_observed_at)) &&
+    Number.isFinite(Date.parse(receipt.source_expires_at)), "SAVE_SCOPE");
   const directoryRoot = resolve(rootDir);
   await mkdir(directoryRoot, { recursive: true, mode: 0o700 });
   const directory = await mkdtemp(join(directoryRoot, "scout-"));
