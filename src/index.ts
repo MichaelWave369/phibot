@@ -218,3 +218,6 @@ export type { CloudScoutPublicReview, PublicGet } from "./cloud/public-acquisiti
 
 export {runLocalScoutShadow} from "./cloud/shadow-scout.js";
 export type {ShadowScoutReport} from "./cloud/shadow-scout.js";
+
+export {qualifyLocalScout,saveScoutFieldPass} from "./qualification/scout-field.js";
+export type {ScoutFieldPassReceipt} from "./qualification/scout-field.js";

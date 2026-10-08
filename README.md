@@ -40,3 +40,7 @@ A new **manual-only** GitHub Actions workflow will run PHIBOT-09 against the rea
 ## PHIBOT-11: operator-only local Scout shadow reasoning
 
 `npm run scout:shadow -- --ack-unverified-public` explicitly retrieves the live public Scout evidence, verifies a fresh result, and runs **one local Ollama reasoning stage** inside the existing PhiBotRuntime. It has zero tools, memory admission, granted permissions, remote inference, or persistent bot spawning. See [PHIBOT-11](docs/LOCAL_SCOUT_SHADOW.md). No background agents are installed.
+
+## PHIBOT-12: real local Scout acceptance receipts
+
+After the manual cloud-public qualification, run `npm run scout:field -- --ack-unverified-public --model qwen3:4b` on a Windows/Node 22/Ollama machine. A successful one-shot public read and bounded local reasoning stage saves **only sanitized pass metadata and a hash** in `.phibot/scout-qualification/`. No model text, tool grants, background bots or memory content are persisted. See [PHIBOT-12](docs/SCOUT_LOCAL_FIELD_RECEIPT.md).

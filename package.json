@@ -17,7 +17,8 @@
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
     "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
     "cloud:inspect": "npm run build --silent && node dist/src/cloud-inspect-cli.js",
-    "scout:shadow": "npm run build --silent && node dist/src/scout-shadow-cli.js"
+    "scout:shadow": "npm run build --silent && node dist/src/scout-shadow-cli.js",
+    "scout:field": "npm run build --silent && node dist/src/scout-field-cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
