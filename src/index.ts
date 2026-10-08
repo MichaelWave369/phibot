@@ -215,3 +215,6 @@ export type { CloudMissionDisposition, CloudMissionReview } from "./cloud/missio
 
 export { PUBLIC_API, publicGitHubGet, inspectPublishedCloudScout } from "./cloud/public-acquisition.js";
 export type { CloudScoutPublicReview, PublicGet } from "./cloud/public-acquisition.js";
+
+export {runLocalScoutShadow} from "./cloud/shadow-scout.js";
+export type {ShadowScoutReport} from "./cloud/shadow-scout.js";
