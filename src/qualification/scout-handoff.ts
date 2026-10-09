@@ -113,9 +113,15 @@ export function projectScoutHandoff(
     typeof r.source_commit==="string" && SHA40.test(r.source_commit) &&
     typeof r.source_status_sha256==="string" && SHA64.test(r.source_status_sha256),
     "RECEIPT_IDENTIFIERS");
-  const qualified=iso(r.qualified_at,FULL_Z);
+  const qualifiedAt=r.qualified_at;
+  const sourceExpiresAt=r.source_expires_at;
+  const localModel=r.local_model;
+  const sourceRunId=r.source_run_id;
+  guard(typeof qualifiedAt==="string" && typeof sourceExpiresAt==="string" &&
+    typeof localModel==="string" && typeof sourceRunId==="string","RECEIPT_TYPES");
+  const qualified=iso(qualifiedAt,FULL_Z);
   const observed=iso(r.source_observed_at,SOURCE_DATE);
-  const expires=iso(r.source_expires_at,SOURCE_DATE);
+  const expires=iso(sourceExpiresAt,SOURCE_DATE);
   guard(expires-observed===TTL && qualified >= observed-300000 &&
     qualified<=expires && qualified<=nowMs+300000,"RECEIPT_TIMELINE");
   return Object.freeze({
@@ -123,11 +129,11 @@ export function projectScoutHandoff(
     evidence_class:"LOCAL_SELF_REPORTED_FORMAT_AND_DIGEST_ONLY",
     mode:"MANUAL_OPERATOR_COPY_ONLY",
     qualification_result:"PASS_LOCAL_SCOUT_SHADOW",
-    source_run_id:r.source_run_id,
+    source_run_id:sourceRunId,
     source_mission_id:"phibot.scout.public-repo-health.v1",
-    local_model:r.local_model,
-    qualified_at:r.qualified_at,
-    source_expires_at:r.source_expires_at,
+    local_model:localModel,
+    qualified_at:qualifiedAt,
+    source_expires_at:sourceExpiresAt,
     review_freshness:nowMs>=qualified && nowMs<=expires ?
       "CURRENT_WITHIN_SOURCE_WINDOW":"HISTORICAL_EXPIRED_OR_NOT_YET_CURRENT",
     receipt_digest_sha256:computed,
