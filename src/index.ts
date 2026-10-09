@@ -221,3 +221,6 @@ export type {ShadowScoutReport} from "./cloud/shadow-scout.js";
 
 export {qualifyLocalScout,saveScoutFieldPass} from "./qualification/scout-field.js";
 export type {ScoutFieldPassReceipt} from "./qualification/scout-field.js";
+
+export {projectScoutHandoff,readLocalScoutHandoff} from "./qualification/scout-handoff.js";
+export type {ScoutVessieHandoff} from "./qualification/scout-handoff.js";

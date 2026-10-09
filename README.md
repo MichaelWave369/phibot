@@ -52,3 +52,7 @@ After the manual cloud-public qualification, run `npm run scout:field -- --ack-u
 ## PHIBOT-14: Action-free Scout advisory schema
 
 When `scout:field` or `scout:shadow` is invoked, local Ollama receives an **advisory-only** output schema permitting only `summary` and `confidence`. The Shadow interpreter independently rejects any `action` key (including `action:null`) or extra field. This addresses the first real Windows `PHIBOT_SHADOW_MODEL_PROPOSED_ACTION` refusal without weakening authorization boundaries or changing normal PhiBot provider behavior. See [PHIBOT-14](docs/SCOUT_ADVISORY_ONLY.md).
+
+## PHIBOT-15: Read-only Scout receipt handoff
+
+After the first real local Scout PASS, `npm run scout:handoff -- --receipt .phibot/scout-qualification/scout-XXXXX --ack-local-self-report` validates the local hashed qualification record and prints a **redacted advisory handoff** for operator copying. No model, network call, permission, memory admission, or Vessie connection occurs. See [PHIBOT-15](docs/SCOUT_RECEIPT_HANDOFF.md).
