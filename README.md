@@ -44,3 +44,7 @@ A new **manual-only** GitHub Actions workflow will run PHIBOT-09 against the rea
 ## PHIBOT-12: real local Scout acceptance receipts
 
 After the manual cloud-public qualification, run `npm run scout:field -- --ack-unverified-public --model qwen3:4b` on a Windows/Node 22/Ollama machine. A successful one-shot public read and bounded local reasoning stage saves **only sanitized pass metadata and a hash** in `.phibot/scout-qualification/`. No model text, tool grants, background bots or memory content are persisted. See [PHIBOT-12](docs/SCOUT_LOCAL_FIELD_RECEIPT.md).
+
+## PHIBOT-13: Explain local field refusals safely
+
+`scout:field` now labels a failed operator run by phase (PUBLIC_READ, LOCAL_OLLAMA, QUALIFICATION, LOCAL_SAVE, ARGUMENTS) and prints fixed no-payload diagnostic codes rather than a generic refusal. It never prints raw model text or GitHub data. [Windows diagnostics](docs/SCOUT_FIELD_DIAGNOSTICS.md).
