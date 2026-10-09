@@ -8,6 +8,10 @@ import { inspectPublishedCloudScout } from "./cloud/public-acquisition.js";
 import { runLocalScoutShadow } from "./cloud/shadow-scout.js";
 import { OllamaProvider } from "./providers/ollama.js";
 import { qualifyLocalScout, saveScoutFieldPass } from "./qualification/scout-field.js";
+import { diagnoseScoutFieldFailure } from "./qualification/scout-diagnostics.js";
+import type { ScoutFieldPhase } from "./qualification/scout-diagnostics.js";
+
+let phase: ScoutFieldPhase = "ARGUMENTS";
 
 async function main(): Promise<void> {
   const args=process.argv.slice(2);
@@ -26,6 +30,7 @@ async function main(): Promise<void> {
   if(Number(process.versions.node.split(".")[0])<22)
     throw new Error("PHIBOT_SCOUT_FIELD_NODE22");
   // The existing reader has four allowlisted, public GETs and no credentials.
+  phase="PUBLIC_READ";
   const source=await inspectPublishedCloudScout();
   if(source.review.disposition!=="OBSERVED_OK_UNVERIFIED_PUBLIC")
     throw new Error("PHIBOT_SCOUT_FIELD_NOT_FRESH");
@@ -35,8 +40,11 @@ async function main(): Promise<void> {
     timeoutMs:60_000,think:false,keepAlive:"10m",
     numPredict:160,repeatRecovery:true,
   });
+  phase="LOCAL_OLLAMA";
   const shadow=await runLocalScoutShadow(source,modelProvider);
+  phase="QUALIFICATION";
   const receipt=qualifyLocalScout(source,shadow);
+  phase="LOCAL_SAVE";
   const output=await saveScoutFieldPass(receipt);
   // Never print the Ollama prose or raw GitHub payload in qualification mode.
   console.log(JSON.stringify({
@@ -50,8 +58,6 @@ async function main(): Promise<void> {
   },null,2));
 }
 main().catch((error:unknown)=>{
-  const code=error instanceof Error && error.message.startsWith("PHIBOT_SCOUT_FIELD_") ?
-    error.message : "PHIBOT_SCOUT_FIELD_REFUSED";
-  console.error(code);
+  console.error(JSON.stringify(diagnoseScoutFieldFailure(error,phase),null,2));
   process.exitCode=2;
 });
