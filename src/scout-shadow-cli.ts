@@ -26,7 +26,7 @@ async function main() {
   // Override OLLAMA_HOST explicitly: no remote provider hosts or credential relay.
   const provider=new OllamaProvider(model,{
     baseUrl:"http://127.0.0.1:11434",timeoutMs:60_000,
-    think:false,numPredict:160,keepAlive:"10m",repeatRecovery:true,
+    think:false,numPredict:160,keepAlive:"10m",repeatRecovery:true,responseMode:"advisory-only",
   });
   const result=await runLocalScoutShadow(evidence,provider);
   console.log(JSON.stringify(result,null,2));

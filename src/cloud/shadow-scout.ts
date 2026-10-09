@@ -123,6 +123,16 @@ class SingleCallShadowAdapter implements PhiBotAdapter {
     assert(completion.provider === this.provider.id &&
       completion.model === this.provider.model && completion.fallback === false,
       "PROVIDER_IDENTITY_OR_FALLBACK");
+    // Schema-constrained generation still requires independent validation.
+    let raw: unknown;
+    try { raw = JSON.parse(completion.content) as unknown; }
+    catch { throw new Error("PHIBOT_SHADOW_ADVISORY_JSON"); }
+    assert(raw !== null && typeof raw === "object" && !Array.isArray(raw),
+      "ADVISORY_OBJECT");
+    const keys = Object.keys(raw);
+    assert(!keys.includes("action"), "MODEL_PROPOSED_ACTION");
+    assert(keys.length === 2 && keys.includes("summary") && keys.includes("confidence"),
+      "ADVISORY_FIELDS");
     const parsed = parseProviderPayload(completion.content);
     assert(parsed.action === undefined, "MODEL_PROPOSED_ACTION");
     assert(parsed.summary.length <= MAX_SUMMARY &&
