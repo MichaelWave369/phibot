@@ -13,6 +13,8 @@ export interface OllamaProviderOptions {
   keepAlive?: string | number;
   numPredict?: number;
   repeatRecovery?: boolean;
+  /** Action-free schema, used only by the local Scout shadow pilot. */
+  responseMode?: "stage" | "advisory-only";
 }
 
 interface AttemptProfile {
@@ -66,6 +68,16 @@ const STAGE_FORMAT = {
   required: ["summary", "confidence"],
 } as const;
 
+export const ADVISORY_ONLY_FORMAT = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    summary: { type: "string", minLength: 1, maxLength: 240 },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+  },
+  required: ["summary", "confidence"],
+} as const;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -89,8 +101,16 @@ function isRepeatLimitError(error: unknown): error is OllamaHttpError {
 
 function buildMessages(
   request: ProviderRequest,
+  responseMode: "stage" | "advisory-only" = "stage",
 ): Array<{ role: "system" | "user"; content: string }> {
-  const system = [
+  const system = responseMode === "advisory-only" ? [
+    "You are a local, read-only Scout evidence interpreter, not an execution agent.",
+    "Your ONLY response is a JSON object with exactly two fields: summary (string) and confidence (number).",
+    "Never include an action field, tool call, instruction, command, capability, or request for authorization.",
+    "Describe the evidence as unverified public observation, never authenticated proof.",
+    "Write plain advisory prose no longer than 240 characters, with no newlines.",
+    "Do not emit chain-of-thought.",
+  ].join(" ") : [
     "You are the bounded execution brain for a governed PhiBot.",
     "Return one concise object matching the supplied JSON schema.",
     "Summary must be brief and operational.",
@@ -134,6 +154,7 @@ export class OllamaProvider implements PhiProvider {
   private readonly keepAlive: string | number;
   private readonly numPredict: number;
   private readonly repeatRecovery: boolean;
+  private readonly responseMode: "stage" | "advisory-only";
 
   constructor(model: string, options: OllamaProviderOptions = {}) {
     this.model = model;
@@ -148,6 +169,10 @@ export class OllamaProvider implements PhiProvider {
     this.keepAlive = options.keepAlive ?? "10m";
     this.numPredict = options.numPredict ?? 160;
     this.repeatRecovery = options.repeatRecovery ?? true;
+    this.responseMode = options.responseMode ?? "stage";
+    if (this.responseMode !== "stage" && this.responseMode !== "advisory-only") {
+      throw new Error("Unknown Ollama response mode.");
+    }
 
     if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 1) {
       throw new Error("Ollama timeoutMs must be a positive integer.");
@@ -173,10 +198,10 @@ export class OllamaProvider implements PhiProvider {
         body: JSON.stringify({
           model: this.model,
           stream: false,
-          format: STAGE_FORMAT,
+          format: this.responseMode === "advisory-only" ? ADVISORY_ONLY_FORMAT : STAGE_FORMAT,
           think: this.think,
           keep_alive: this.keepAlive,
-          messages: buildMessages(request),
+          messages: buildMessages(request, this.responseMode),
           options: {
             temperature: profile.temperature,
             num_predict: this.numPredict,

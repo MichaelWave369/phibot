@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   const modelProvider=new OllamaProvider(model,{
     baseUrl:"http://127.0.0.1:11434",
     timeoutMs:60_000,think:false,keepAlive:"10m",
-    numPredict:160,repeatRecovery:true,
+    numPredict:160,repeatRecovery:true,responseMode:"advisory-only",
   });
   phase="LOCAL_OLLAMA";
   const shadow=await runLocalScoutShadow(source,modelProvider);
