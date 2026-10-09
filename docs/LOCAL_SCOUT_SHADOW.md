@@ -36,3 +36,7 @@ npm run scout:shadow -- --ack-unverified-public --model qwen3:4b
 CI checks pure offline invariants with a fake provider and fixed public-summary fixtures. On a qualified local Ollama machine, an explicit manual run can demonstrate **one real local reasoning stage on a safely minimized evidence projection**. It cannot prove source authorship, AI alignment, OS process isolation, independent identity, remote bot autonomy or live hosted agent execution.
 
 This rung is a shadow pilot, not a generally deployable cloud agent. The standalone existing PhiBot acceptance/qualification systems remain unchanged.
+
+## PHIBOT-14: Advisory-only local schema
+
+The first Windows field run proved public GitHub reads worked but qwen3:4b returned a forbidden action. The local Scout provider now explicitly requests an action-free JSON schema with `summary` and `confidence` only. The consumer separately rejects action-shaped or extra fields. The existing no-authority runtime restrictions are unchanged.

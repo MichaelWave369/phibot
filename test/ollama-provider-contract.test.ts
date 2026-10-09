@@ -4,6 +4,7 @@ import type { ProviderRequest } from "../src/providers/types.js";
 import {
   OllamaProvider,
   STAGE_FORMAT,
+  ADVISORY_ONLY_FORMAT,
 } from "../src/providers/ollama.js";
 
 const request: ProviderRequest = {
@@ -142,4 +143,41 @@ test("Ollama does not retry unrelated HTTP errors", async () => {
     /out of memory/,
   );
   assert.equal(calls, 1);
+});
+
+test("Scout advisory-only Ollama schema has no action field or execution-oriented prompt", async()=>{
+  let body: Record<string,unknown> | undefined;
+  const fetchImpl=(async(_input: string | URL | Request,init?: RequestInit)=>{
+    body=JSON.parse(String(init?.body)) as Record<string,unknown>;
+    return successResponse();
+  }) as typeof fetch;
+  const provider=new OllamaProvider("qwen3:4b",{fetchImpl,responseMode:"advisory-only"});
+  await provider.complete({
+    ...request,stage:"interpret",
+    manifest:{...request.manifest,
+      capabilities:[],
+      authority:{read:false,propose:false,write:false,deploy:false}
+    },
+  });
+  assert.deepEqual(body?.format,ADVISORY_ONLY_FORMAT);
+  const schema=body?.format as Record<string,unknown>;
+  assert.equal((schema.properties as Record<string,unknown>).action,undefined);
+  const messages=body?.messages as Array<{role:string;content:string}>;
+  assert.ok(messages[0]?.content.includes("Never include an action field"));
+  assert.ok(!messages[0]?.content.includes("Only include action when"));
+  assert.equal(body?.think,false);
+});
+
+test("Scout advisory-only schema survives narrow Ollama token-repeat retry",async()=>{
+  const bodies: Array<Record<string,unknown>>=[];
+  const fetchImpl=(async(_input: string | URL | Request,init?: RequestInit)=>{
+    bodies.push(JSON.parse(String(init?.body)) as Record<string,unknown>);
+    return bodies.length===1 ?
+      new Response('{"error":"prediction aborted, token repeat limit reached"}',{status:500}) :
+      successResponse();
+  }) as typeof fetch;
+  const provider=new OllamaProvider("qwen3:4b",{fetchImpl,responseMode:"advisory-only"});
+  await provider.complete({...request,stage:"interpret"});
+  assert.equal(bodies.length,2);
+  for(const body of bodies)assert.deepEqual(body.format,ADVISORY_ONLY_FORMAT);
 });

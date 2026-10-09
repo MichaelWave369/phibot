@@ -48,3 +48,7 @@ After the manual cloud-public qualification, run `npm run scout:field -- --ack-u
 ## PHIBOT-13: Explain local field refusals safely
 
 `scout:field` now labels a failed operator run by phase (PUBLIC_READ, LOCAL_OLLAMA, QUALIFICATION, LOCAL_SAVE, ARGUMENTS) and prints fixed no-payload diagnostic codes rather than a generic refusal. It never prints raw model text or GitHub data. [Windows diagnostics](docs/SCOUT_FIELD_DIAGNOSTICS.md).
+
+## PHIBOT-14: Action-free Scout advisory schema
+
+When `scout:field` or `scout:shadow` is invoked, local Ollama receives an **advisory-only** output schema permitting only `summary` and `confidence`. The Shadow interpreter independently rejects any `action` key (including `action:null`) or extra field. This addresses the first real Windows `PHIBOT_SHADOW_MODEL_PROPOSED_ACTION` refusal without weakening authorization boundaries or changing normal PhiBot provider behavior. See [PHIBOT-14](docs/SCOUT_ADVISORY_ONLY.md).

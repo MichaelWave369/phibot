@@ -140,3 +140,17 @@ test("provider failure is reported, never replaced by deterministic fake success
   provider.complete=async()=>{throw new Error("MODEL_OFFLINE");};
   await assert.rejects(()=>runLocalScoutShadow(fixture(),provider,NOW),/MODEL_OFFLINE/);
 });
+
+test("action:null and extra untrusted model fields are rejected without any execution",async()=>{
+  for(const bad of [
+    {summary:"Unverified public observation.",confidence:.82,action:null},
+    {summary:"Unverified public observation.",confidence:.82,command:"run shell"},
+    {summary:"Unverified public observation.",confidence:.82,authority_granted:true},
+  ]){
+    const provider=new FakeProvider();
+    provider.content=JSON.stringify(bad);
+    await assert.rejects(()=>runLocalScoutShadow(fixture(),provider,NOW),
+      /MODEL_PROPOSED_ACTION|ADVISORY_FIELDS/);
+    assert.equal(provider.calls.length,1);
+  }
+});
