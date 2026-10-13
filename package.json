@@ -19,7 +19,9 @@
     "cloud:inspect": "npm run build --silent && node dist/src/cloud-inspect-cli.js",
     "scout:shadow": "npm run build --silent && node dist/src/scout-shadow-cli.js",
     "scout:field": "npm run build --silent && node dist/src/scout-field-cli.js",
-    "scout:handoff": "npm run build --silent && node dist/src/scout-handoff-cli.js"
+    "scout:handoff": "npm run build --silent && node dist/src/scout-handoff-cli.js",
+    "market:build": "npm run build && node scripts/build-market-lab.mjs",
+    "market:serve": "npm run market:build && node scripts/serve-market-lab.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

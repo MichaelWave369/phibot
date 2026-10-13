@@ -6,3 +6,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Generated PHIBOT-17 browser qualification site
+.market-host-dist/
