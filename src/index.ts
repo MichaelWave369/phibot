@@ -224,3 +224,11 @@ export type {ScoutFieldPassReceipt} from "./qualification/scout-field.js";
 
 export {projectScoutHandoff,readLocalScoutHandoff} from "./qualification/scout-handoff.js";
 export type {ScoutVessieHandoff} from "./qualification/scout-handoff.js";
+
+// PHIBOT-16: read-only market observation and experimental PocketBrain Tiny seam.
+export { assessMarketTick } from "./market/observation.js";
+export type { MarketTick, MarketReadPolicy, MarketObservation } from "./market/observation.js";
+export { PocketBrainTinyFleet } from "./market/pocketbrain-tiny.js";
+export type { TinySdkClient, TinyAdvisory, TinyBotSession } from "./market/pocketbrain-tiny.js";
+export { runReadOnlyMarketScout } from "./market/mission.js";
+export type { MarketScoutInput, MarketScoutResult } from "./market/mission.js";
