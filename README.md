@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-17: Opt-in PocketBrain Tiny browser qualification (candidate)
+
+An operator-driven [Market Lab](docs/POCKETBRAIN_BROWSER_HOST.md) now compiles the existing PhiBot market assessor and Tiny fleet to a dependency-free, local static browser host. It prompts for explicit model download consent, loads the **real** PocketBrain browser SDK only on click, and runs Scout and Skeptic advisory sessions through **one** Tiny client using a **synthetic** quote. Nothing trades, runs in the background, persists reports, or modifies the Node PhiBot agent service. Run `npm run market:serve` after `npm install` (Node.js 22+), and open http://127.0.0.1:4173. CI tests mocks; real browser field PASS is not established.
+
 ## PHIBOT-16: PocketBrain Tiny market scout (experimental)
 
 A read-only, governed market-research seam now validates caller-supplied timestamped prices against explicit host and freshness policies, records source-claimed (not independently verified) evidence receipts, and supports isolated PhiBot advisory sessions over one injected PocketBrain Tiny browser client. No live feed, browser host, background schedule, model download, financial transaction, or production cross-runtime connection is bundled. PocketBrain Tiny remains a browser-only SDK candidate; the Node bridge and live real-model qualification are future gates. See [PHIBOT-16](docs/POCKETBRAIN_MARKET_CREW.md).
