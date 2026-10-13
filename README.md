@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-16: PocketBrain Tiny market scout (experimental)
+
+A read-only, governed market-research seam now validates caller-supplied timestamped prices against explicit host and freshness policies, records source-claimed (not independently verified) evidence receipts, and supports isolated PhiBot advisory sessions over one injected PocketBrain Tiny browser client. No live feed, browser host, background schedule, model download, financial transaction, or production cross-runtime connection is bundled. PocketBrain Tiny remains a browser-only SDK candidate; the Node bridge and live real-model qualification are future gates. See [PHIBOT-16](docs/POCKETBRAIN_MARKET_CREW.md).
+
 ## Field qualification
 
 ```bash
