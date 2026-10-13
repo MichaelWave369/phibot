@@ -90,7 +90,7 @@ export class BrowserMarketLab {
       this.fleet = new PocketBrainTinyFleet(candidate);
       this.phase = "ready";
     } catch (error) {
-      if (candidate?.getStatus?.().ready) {
+      if (candidate && typeof candidate.dispose === "function") {
         try { await candidate.dispose(); } catch { /* do not mask original failure */ }
       }
       this.client = null;
