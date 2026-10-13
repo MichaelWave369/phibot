@@ -232,3 +232,7 @@ export { PocketBrainTinyFleet } from "./market/pocketbrain-tiny.js";
 export type { TinySdkClient, TinyAdvisory, TinyBotSession } from "./market/pocketbrain-tiny.js";
 export { runReadOnlyMarketScout } from "./market/mission.js";
 export type { MarketScoutInput, MarketScoutResult } from "./market/mission.js";
+
+// PHIBOT-17: experimental opt-in browser qualification controller (no Node service bridge).
+export { BrowserMarketLab } from "./market/browser-lab.js";
+export type { BrowserTinyClient, BrowserLabReport, BrowserLabPhase, TinyDevice } from "./market/browser-lab.js";
