@@ -61,7 +61,7 @@ test("reports are copied, stay local until explicit export, and never drive tran
   const report = await lab.runSyntheticCrew(SDK_URL);
   assert.equal(report.sessions[0]?.status, "advisory");
   assert.equal(report.modelOutputTrusted, false);
-  const copies = lab.getReports() as Array<{ authority: string }>;
+  const copies = lab.getReports() as unknown as Array<{ authority: string }>;
   copies[0]!.authority = "TRADE_ALLOWED";
   assert.equal(lab.getReports()[0]?.authority, "READ_ONLY_ADVISORY");
   await assert.rejects(lab.loadWithConsent(true, async () => mockClient([])), /already loaded/);
