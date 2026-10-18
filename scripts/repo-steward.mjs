@@ -51,7 +51,7 @@ function isAllowlisted(name) {
     .map(s => s.trim()).filter(Boolean).includes(name);
 }
 
-function client(token, transport = fetch) {
+export function githubClient(token, transport = fetch) {
   return async (method, resource, data, optional = false) => {
     const response = await transport(API + resource, {
       method,
@@ -71,7 +71,7 @@ function client(token, transport = fetch) {
   };
 }
 
-async function listRepos(gh, maxRepos) {
+export async function listRepos(gh, maxRepos) {
   const found = [];
   for (let page = 1; page <= 3 && found.length < maxRepos; page++) {
     const batch = await gh("GET", "/users/" + encodeURIComponent(OWNER) + "/repos?per_page=100&page=" + page + "&sort=updated");
@@ -151,7 +151,7 @@ async function propose(issue, currentContent, target) {
   return result;
 }
 
-async function receipt(event) {
+export async function receipt(event) {
   const dir = resolve(".phibot", "repo-steward");
   await mkdir(dir, { recursive: true, mode: 0o700 });
   await appendFile(resolve(dir, "ledger.ndjson"),
@@ -159,20 +159,43 @@ async function receipt(event) {
     { mode: 0o600 });
 }
 
+export async function selectPendingIssue(gh, report) {
+  let eligible = 0, skippedExisting = 0, skippedChanged = 0, skippedMissingSource = 0;
+  for (const repo of report.reports) {
+    if (!isAllowlisted(repo.name)) continue;
+    for (const issue of repo.issues) {
+      if (!issue.eligible) continue;
+      eligible++;
+      const target = issue.target;
+      const branch = "phibot/issue-" + issue.number;
+      const prefix = "/repos/" + repo.name;
+      if (await gh("GET", prefix + "/git/ref/heads/" + branch, undefined, true)) {
+        skippedExisting++;
+        continue;
+      }
+      const freshIssue = await gh("GET", prefix + "/issues/" + issue.number);
+      if (!eligibleIssue(freshIssue) || parseIssueTarget(freshIssue.body) !== target) {
+        skippedChanged++;
+        continue;
+      }
+      const source = await getSource(gh, repo.name, target);
+      if (!source) {
+        skippedMissingSource++;
+        continue;
+      }
+      return { selected: { repo, issue, freshIssue, target, branch, prefix, source },
+        eligible, skippedExisting, skippedChanged, skippedMissingSource };
+    }
+  }
+  return { selected: null, eligible, skippedExisting, skippedChanged, skippedMissingSource };
+}
+
 async function executeOne(gh, report, dryRun) {
-  const choices = report.reports.flatMap(repo =>
-    repo.issues.filter(x => x.eligible && isAllowlisted(repo.name)).map(issue => ({ repo, issue })));
-  if (!choices.length) return { status: "NO_APPROVED_ISSUES" };
-  const { repo, issue } = choices[0];
-  const target = issue.target, branch = "phibot/issue-" + issue.number;
-  const prefix = "/repos/" + repo.name;
-  if (await gh("GET", prefix + "/git/ref/heads/" + branch, undefined, true))
-    return { status: "BRANCH_ALREADY_EXISTS", repo: repo.name, issue: issue.number };
-  const freshIssue = await gh("GET", prefix + "/issues/" + issue.number);
-  if (!eligibleIssue(freshIssue) || parseIssueTarget(freshIssue.body) !== target)
-    return { status: "ISSUE_CHANGED", repo: repo.name, issue: issue.number };
-  const source = await getSource(gh, repo.name, target);
-  if (!source) return { status: "SOURCE_UNAVAILABLE_OR_TOO_LARGE", repo: repo.name, issue: issue.number };
+  const selection = await selectPendingIssue(gh, report);
+  if (!selection.selected) return { status: "NO_PENDING_ELIGIBLE_ISSUES",
+    eligible: selection.eligible, skippedExisting: selection.skippedExisting,
+    skippedChanged: selection.skippedChanged, skippedMissingSource: selection.skippedMissingSource };
+  const { repo, issue, freshIssue, target, branch, prefix, source } = selection.selected;
   const patch = await propose(freshIssue, source.content, target);
   if (!validateReplacement(source.content, patch.replacement))
     return { status: "PATCH_REJECTED", repo: repo.name, issue: issue.number };
@@ -210,7 +233,7 @@ export async function main(argv = process.argv.slice(2)) {
     throw new Error("Draft candidates require PHIBOT_GITHUB_TOKEN and explicit PHIBOT_REPO_ALLOWLIST");
   if (command === "run" && process.env.PHIBOT_ENABLE_DRAFT_PRS !== "1")
     throw new Error("run requires PHIBOT_ENABLE_DRAFT_PRS=1");
-  const gh = client(token);
+  const gh = githubClient(token);
   const report = await survey(gh, maxRepos);
   const output = command === "scan" ? report : await executeOne(gh, report, command === "dry-run");
   process.stdout.write(JSON.stringify(output, null, 2) + "\n");
