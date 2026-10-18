@@ -96,7 +96,7 @@ async function getSource(gh, repo, file, optional = false) {
   return { content, sha: item.sha };
 }
 
-async function survey(gh, maxRepos) {
+export async function survey(gh, maxRepos) {
   const repos = await listRepos(gh, maxRepos);
   const reports = [];
   for (const repo of repos) {
