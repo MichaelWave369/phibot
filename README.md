@@ -82,3 +82,7 @@ Two **read-only** GitHub capabilities, `repo.steward.discover` and `repo.steward
 ### PHIBOT-22: exact Reality-Gated documentation draft writes
 
 `repo.steward.draft` is a real registered `write` tool that **always** requires a signed, single-use Reality Gate grant bound to the entire proposal, even if a bot manifest says `write: true`. Its first scope is only one approved existing README/docs Markdown file on an allowlisted repo, committed to one new `phibot/issue-N` branch and opened as an unverified **draft PR**. No code edits, merging, deployment, or scheduling. The interactive `npm run steward:governed-draft -- <proposal.json>` requires operator confirmation of the exact digest and local opt-in environment settings. See [governed write guide](docs/GOVERNED_DRAFT_GATE.md).
+
+### PHIBOT-23: human-approved governed source-code repair
+
+`repo.steward.repair` is a **mandatory Reality-Gated** write capability for one exact replacement in an existing, still-authorized **draft PR** with verified failed CI on its pinned head SHA. Source edits are limited to permitted `src/` or `test/` files; earlier repairs, multiple-file PRs, stale heads, revoked issues, missing/pending checks and unallowlisted repositories are rejected. A real write requires a human to review the complete proposal and type the approval digest via `npm run steward:governed-repair -- <proposal.json>`. Its one commit remains **CI unverified** until new checks complete. No unattended scheduling or auto-merge is enabled. See [the governed repair field protocol](docs/GOVERNED_REPAIR_GATE.md).
