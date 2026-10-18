@@ -106,3 +106,8 @@ Run `npm run queue:dashboard` for an original, dependency-free, **localhost-only
 An original React/Vite version of the Mission Control dashboard lives in [`site/`](site/), with GitHub Pages deployment through [`pages.yml`](.github/workflows/pages.yml). It is a **public interactive simulation** with illustrative repository jobs, sample receipts, demo queue controls, and a governance walkthrough. **It cannot access the local work queue, credentials, Reality Gate, Ollama, or GitHub write APIs.** The real Node operator dashboard remains private to `127.0.0.1`.
 
 Intended public URL after merging, enabling **Settings → Pages → Source: GitHub Actions** if needed, and verifying successful deployment: **https://michaelwave369.github.io/phibot/**. See [public showcase deployment and safety guide](docs/PUBLIC_MISSION_CONTROL.md).
+
+
+### PHIBOT-28: operator-only local queue qualification
+
+After completing a real read-only job through the local Mission Control, run `npm run queue:qualify` in the same PhiBot clone and with the same `PHIBOT_REPO_ALLOWLIST`. It validates a completed job and its durable `ENQUEUED → LEASED → OBSERVED` transitions, checks evidence agreement, and saves one non-overwritable metadata-only SHA-256 self-report under ignored `.phibot/work-queue/qualification/`. If multiple jobs are complete, specify `-- create --job <64hex>`. A separate `verify --job <64hex>` checks the receipt's self-hash. This is **local consistency evidence, not independent remote attestation**. No network traffic, GitHub writes, model calls, or schedule is introduced. See [PHIBOT-28 Windows qualification guide](docs/LOCAL_QUEUE_FIELD_QUALIFICATION.md).
