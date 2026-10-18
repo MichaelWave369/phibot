@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="dark"/>
+  <title>PhiBot / Local Operations</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="orb orb-a" aria-hidden="true"></div>
+  <div class="orb orb-b" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="topbar">
+      <a class="mark" href="/" aria-label="PhiBot local dashboard">
+        <span class="mark-icon" aria-hidden="true">Φ</span>
+        <span>PHIBOT<span class="dim"> / OPS</span></span>
+      </a>
+      <div class="top-right">
+        <span id="conn" class="connection">LOCAL • CONNECTING</span>
+        <span class="version">PHIBOT-26</span>
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow">LOCAL OPERATIONS • READ-ONLY WORKER</div>
+        <h1>Give the crew a <em>clear view.</em></h1>
+        <p>Track repository observations, queued work, bounded attempts and CI receipts. Nothing runs on a schedule. No GitHub write, model, merge or deploy capability lives in this console.</p>
+        <div class="actions">
+          <button id="refresh" type="button" class="button secondary">↻ &nbsp; Refresh state</button>
+          <button id="run" type="button" class="button primary" disabled>▶ &nbsp; Run one bounded pass</button>
+        </div>
+        <p id="action-note" class="muted small" role="status" aria-live="polite">Operator actions disabled unless explicitly enabled at startup.</p>
+      </section>
+      <div id="banner" class="banner hidden" role="alert"></div>
+      <section class="metrics" aria-label="Work queue totals">
+        <article class="metric">
+          <span>ALL JOBS</span>
+          <strong id="total">–</strong>
+          <small>Persistent local work</small>
+        </article>
+        <article class="metric">
+          <span>AWAITING PASS</span>
+          <strong id="queued">–</strong>
+          <small>Queued observations</small>
+        </article>
+        <article class="metric">
+          <span>COMPLETED</span>
+          <strong id="completed">–</strong>
+          <small>Receipted reads only</small>
+        </article>
+        <article class="metric">
+          <span>ATTENTION</span>
+          <strong id="attention">–</strong>
+          <small>Leased or exhausted</small>
+        </article>
+      </section>
+      <div class="workspace">
+        <div class="maincolumn">
+          <section class="panel">
+            <div class="panel-header">
+              <div><div class="eyebrow">01 / JOB INVENTORY</div><h2>Active work</h2></div>
+              <div id="job-counter" class="pill">0 observations</div>
+            </div>
+            <div class="table-wrap">
+              <table aria-label="Queue jobs">
+                <thead><tr><th>CAPABILITY / REPOSITORY</th><th>STATE</th><th>ATTEMPTS</th><th>EVIDENCE</th></tr></thead>
+                <tbody id="jobs"><tr><td colspan="4" class="empty">Loading local queue…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <div><div class="eyebrow">02 / EVIDENCE LEDGER</div><h2>Recent transitions</h2></div>
+              <span class="pill">Metadata only</span>
+            </div>
+            <div id="events" class="events"><div class="empty">No recorded transitions yet.</div></div>
+          </section>
+        </div>
+        <aside class="sidecolumn">
+          <section class="panel budget-panel">
+            <div class="eyebrow">BOUNDARIES / ALWAYS ON</div>
+            <h2>Execution budget</h2>
+            <div class="limit"><div><span>Jobs per operator pass</span><strong id="max-jobs">–</strong></div><div class="meter"><div id="jobs-meter" style="width:0%"></div></div></div>
+            <div class="limit"><div><span>Maximum pass window</span><strong id="max-ms">–</strong></div><div class="meter"><div id="time-meter" style="width:0%"></div></div></div>
+            <div class="lock-row"><span>WORKER LOCK</span><strong id="lock">–</strong></div>
+            <div class="lock-row"><span>RETRY LIMIT</span><strong>2 per job</strong></div>
+            <div class="lock-row"><span>GITHUB WRITES</span><strong class="green">0 allowed</strong></div>
+            <div class="lock-row"><span>MODEL CALLS</span><strong class="green">0 allowed</strong></div>
+            <p class="muted small">Local lease recovery is conservative and single-machine only. A green test suite does not replace field qualification.</p>
+          </section>
+          <section class="panel enqueue-panel">
+            <div class="eyebrow">03 / OPERATOR REQUEST</div>
+            <h2>Queue an observation</h2>
+            <p class="muted small">Choose an allowlisted repository. This creates only a local read job, not a PR or source modification.</p>
+            <label for="repository">REPOSITORY</label>
+            <select id="repository" disabled><option>Loading approved repositories…</option></select>
+            <label for="capability">READ CAPABILITY</label>
+            <select id="capability" disabled>
+              <option value="repo.steward.discover">Discover roadmap + issues</option>
+              <option value="repo.steward.inspect">Inspect draft PR checks</option>
+            </select>
+            <div id="inspect-fields" class="hidden">
+              <label for="pr">DRAFT PR NUMBER</label>
+              <input id="pr" type="number" min="1" max="9999999" placeholder="e.g. 42"/>
+              <label for="checks">REQUIRED CHECKS (COMMA-SEPARATED)</label>
+              <input id="checks" type="text" placeholder="e.g. test"/>
+            </div>
+            <button id="enqueue" type="button" class="button secondary full" disabled>+ Queue read-only job</button>
+            <p id="enqueue-note" class="small muted" role="status"></p>
+          </section>
+          <section class="panel legend">
+            <div class="eyebrow">OPERATIONAL RULE</div>
+            <blockquote>Ledger Above Ego.</blockquote>
+            <p class="muted small">A task is permission to inspect, not permission to change.</p>
+          </section>
+        </aside>
+      </div>
+    </main>
+    <footer><span>PHIBOT · GOVERNED FIELD SYSTEMS</span><span id="updated">Not yet loaded</span></footer>
+  </div>
+</body>
+</html>
