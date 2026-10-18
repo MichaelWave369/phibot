@@ -70,3 +70,7 @@ Run `npm run steward:scan` for a read-only inventory. See [Repo Steward setup, c
 ### PHIBOT-19: Repo Steward queue and CI verifier
 
 Repo Steward can now skip already-attempted issue branches and move to the next eligible issue. The separate `npm run steward:verify` command checks SHA-bound GitHub Actions/check-status evidence for explicitly authorized draft PRs, including missing/failed/pending checks and stale branches. It is **read-only**, does not run tests locally, does **not** auto-merge or promote, and is not scheduled by default. See [the setup and qualifications](docs/REPO_STEWARD.md).
+
+### PHIBOT-20: PatchBot + SkepticBot CI repair (candidate)
+
+`npm run steward:repair:dry` can inspect an explicitly authorized PhiBot draft PR with **failed GitHub CI**, ask a local PatchBot model for a bounded repair, and have a different local SkepticBot review it. Only an explicitly enabled `steward:repair` can commit **one** repair attempt to the existing draft PR branch. It neither runs repo code nor merges, deploys or promotes any PR; the next CI run is unverified until re-inspected. This is an **isolated opt-in candidate** outside PhiBot's main Reality Gate; no background schedule is installed. See [PHIBOT-20 field and threat model](docs/CI_REPAIR_SKEPTIC.md).
