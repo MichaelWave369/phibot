@@ -134,7 +134,7 @@ test("unknown repo, missing capability and denied authority perform zero reads",
 test("input and allowlist validation block suspicious names and extra fields", async () => {
   assert.throws(() => registerRepoStewardReadTools(new ToolCapabilityRegistry(), {
     owner: OWNER, allowlist: [OWNER + "/../evil"],
-  }), /allowlist/);
+  }), /ALLOWLIST/);
   const h = harness();
   for (const input of [
     { repository: REPO, method: "POST" }, { repository: REPO + "/../Other" },
