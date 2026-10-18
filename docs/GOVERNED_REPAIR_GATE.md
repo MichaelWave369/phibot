@@ -1,5 +1,8 @@
 # PHIBOT-23: SHA-bound Reality-Gated source repair
 
+> **PHIBOT-24 safety update:** The legacy `steward:repair` direct-write command is now disabled. To generate a reviewed model proposal without any GitHub writes, use `npm run steward:repair:handoff`, then inspect the saved JSON and manually invoke `npm run steward:governed-repair -- <proposal.json>`. Read [PHIBOT-24 handoff guide](REPAIR_HANDOFF_QUEUE.md).
+
+
 PHIBOT-23 adds `repo.steward.repair`, an **always-gated** tool in the normal PhiBot ToolExecutor. It can submit one bounded source-code repair to an *existing PhiBot draft PR with genuinely failed GitHub CI*. This does not autonomously generate fixes; a human must inspect and approve the full replacement source with the Reality Gate digest. A separate local PatchBot/SkepticBot prototype from PHIBOT-20 can suggest candidates, but its model votes alone never provide write authorization.
 
 ## Exact evidence and authorization
