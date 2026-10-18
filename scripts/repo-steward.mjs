@@ -14,7 +14,7 @@ export function validateTargetPath(value) {
       value.startsWith("/") || value.includes("\\") ||
       value.split("/").some(part => !part || part === "." || part === "..")) return false;
   if (!/^(README\.md|(?:docs|src|test)\/[A-Za-z0-9_./-]+\.(?:md|ts|tsx|js|mjs|css|json))$/.test(value)) return false;
-  if (/(?:^|\/)(?:\.|node_modules|dist|vendor|secrets?|credentials?|auth|security|gate|authority)(?:\/|\.|$)/i.test(value)) return false;
+  if (/(?:^|\/)(?:\.|node_modules|dist|vendor|secrets?|credentials?|auth|security|gate|authority)(?:[-_.\/]|$)/i.test(value)) return false;
   return !/(?:\.test\.snap|package-lock\.json|tsconfig\.json)$/i.test(value);
 }
 
