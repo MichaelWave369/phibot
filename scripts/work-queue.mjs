@@ -142,6 +142,10 @@ export async function inspectQueue(policy, dir = QUEUE_HOME) {
       repository: job.input.repository,
       ...(job.input.prNumber ? { prNumber: job.input.prNumber } : {}),
       state: job.state, attempts: job.attempts,
+      updatedAt: job.updatedAt,
+      leaseExpiresAt: job.state === "leased" && Number.isSafeInteger(job.lease?.expiresMs) &&
+        job.lease.expiresMs >= 0 && job.lease.expiresMs < 8640000000000000
+        ? new Date(job.lease.expiresMs).toISOString() : null,
       lastOutcome: job.lastOutcome, evidence: job.evidence
     })) };
 }
