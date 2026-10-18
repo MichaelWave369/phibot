@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 /**
- * PHIBOT-20: locally generated, separately reviewed, one-attempt repair for
- * an already-authorized PhiBot draft PR with failed GitHub checks.
- *
- * No repository code execution, CI reruns, merge, deploy, or PR promotion.
- * Default dry-run. All GitHub writes require a separate explicit opt-in.
+ * PHIBOT-24: PatchBot/SkepticBot read-only repair proposal engine.
+ * Only a separately human-approved Reality Gate tool is allowed to write GitHub.
  */
-import { createHash } from "node:crypto";
-import { mkdir, open } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
-  githubClient, receipt, eligibleIssue, parseIssueTarget,
+  githubClient, eligibleIssue, parseIssueTarget,
   validateTargetPath, validateReplacement
 } from "./repo-steward.mjs";
 import {
@@ -20,7 +15,6 @@ import {
 } from "./repo-steward-verify.mjs";
 
 const MAX_FILE = 12000;
-const REPAIR_PREFIX = "phibot: repair-once pr#";
 const MAX_CANDIDATE_CHANGED_LINES = 48;
 const MAX_DIAGNOSTICS = 3;
 
@@ -167,21 +161,6 @@ async function sourceAt(gh, prefix, target, sha) {
   return { text, sha: item.sha };
 }
 
-async function claimLocalAttempt(repository, number, sha, baseDir =
-  resolve(".phibot", "repo-steward", "repair-attempts")) {
-  const id = createHash("sha256").update(repository + "#PR" + number).digest("hex");
-  await mkdir(baseDir, { recursive: true, mode: 0o700 });
-  const file = resolve(baseDir, id + ".json");
-  // Exclusive file creation; no retries even after a partial or crashed attempt.
-  const handle = await open(file, "wx", 0o600);
-  try {
-    await handle.writeFile(JSON.stringify({
-      schema: "phibot.repair-attempt.v1", repository, number, sha,
-      startedAt: new Date().toISOString(), status: "CONSUMED_BEFORE_REMOTE_WRITE"
-    }) + "\n");
-  } finally { await handle.close(); }
-}
-
 async function prepare(gh, policy, selection) {
   const repoName = selection.repository, prefix = "/repos/" + repoName;
   const meta = await gh("GET", prefix);
@@ -202,13 +181,17 @@ async function prepare(gh, policy, selection) {
       files[0]?.status !== "modified") throw new Error("NOT_SINGLE_FILE_CANDIDATE");
   const commits = await gh("GET", prefix + "/pulls/" + pr.number + "/commits?per_page=100");
   if (!Array.isArray(commits) || commits.length >= 100 ||
-      commits.some(c => String(c?.commit?.message || "").startsWith(REPAIR_PREFIX)))
+      commits.some(c => ["phibot: repair-once pr#", "phibot: governed repair PR#"].some(
+      prefix => String(c?.commit?.message || "").startsWith(prefix))))
     throw new Error("REPAIR_ALREADY_ATTEMPTED_OR_HISTORY_TRUNCATED");
 
   const checks = await gh("GET", prefix + "/commits/" + selection.sha + "/check-runs?per_page=100");
   const statuses = await gh("GET", prefix + "/commits/" + selection.sha + "/status?per_page=100");
   const checkState = classifyCheckEvidence(checks, statuses, policy.required);
-  if (checkState.status !== "CHECKS_FAILED") throw new Error("FAILURE_EVIDENCE_CHANGED");
+  if (checkState.status !== "CHECKS_FAILED" ||
+      checkState.evidence?.some(e => e.origin === "check_run"
+        ? e.status !== "completed" : e.status === "pending"))
+    throw new Error("FAILURE_EVIDENCE_CHANGED");
 
   const compare = await gh("GET", prefix + "/compare/" +
     encodeURIComponent(meta.default_branch) + "..." + selection.sha);
@@ -222,21 +205,21 @@ async function prepare(gh, policy, selection) {
     target: bound.target, current, hints, sha: selection.sha };
 }
 
-export async function repairOne(gh, policy, { dryRun = true,
-  patch = patchWithLocalModel, skeptic = reviewWithLocalModel,
-  claim = claimLocalAttempt } = {}) {
+export async function repairOne(gh, policy, {
+  patch = patchWithLocalModel, skeptic = reviewWithLocalModel, handoff = null
+} = {}) {
   const report = await verifyCandidates(gh, policy);
   const selected = selectRepairable(report);
   if (!selected) return { status: "NO_REPAIRABLE_FAILED_CI_DRAFTS",
     inspected: report.repositories.length, mode: "NO_REMOTE_WRITE" };
-
   const job = await prepare(gh, policy, selected);
   const request = { issue: { title: String(job.issue.title || "").slice(0, 280),
     body: String(job.issue.body || "").slice(0, 4000) },
     file: job.target, original: job.current.text,
     failedChecks: job.hints, headSha: job.sha };
   const change = await patch(request);
-  if (typeof change?.summary !== "string" || change.summary.length > 280 ||
+  if (typeof change?.summary !== "string" || change.summary.length > 140 ||
+      change.summary.trim().length < 12 || /[\r\n\0]/.test(change.summary) ||
       !boundedChange(job.current.text, change?.replacement))
     return { status: "PATCH_REJECTED", repository: job.repoName, pr: job.pr.number };
   const judgment = parseReview(await skeptic({
@@ -245,51 +228,29 @@ export async function repairOne(gh, policy, { dryRun = true,
   if (!judgment.approve || judgment.risk !== "LOW")
     return { status: "SKEPTIC_REFUSED", repository: job.repoName,
       pr: job.pr.number, risk: judgment.risk, reason: judgment.reason };
-  if (dryRun)
-    return { status: "DRY_RUN_REVIEW_ACCEPTED_NO_WRITE", repository: job.repoName,
-      pr: job.pr.number, target: job.target, sha: job.sha,
-      review: judgment.reason, patchSummary: change.summary };
-
-  if (process.env.PHIBOT_ENABLE_REPAIR_WRITES !== "1")
-    throw new Error("Repair writes require PHIBOT_ENABLE_REPAIR_WRITES=1");
-
-  // Refuse a newer PR head, revoked issue, changed file or existing repair
-  // before consuming the one permitted local write attempt.
-  const fresh = await prepare(gh, policy, selected);
-  if (fresh.current.sha !== job.current.sha || fresh.current.text !== job.current.text ||
-      fresh.issue.body !== job.issue.body) throw new Error("SOURCE_CHANGED_BEFORE_WRITE");
-  const branchRef = await gh("GET", fresh.prefix + "/git/ref/heads/" + fresh.pr.head.ref);
-  if (branchRef?.object?.sha !== job.sha) throw new Error("BRANCH_CHANGED_BEFORE_WRITE");
-
-  await claim(job.repoName, job.pr.number, job.sha);
-  let status = "REPAIR_WRITE_FAILED_ATTEMPT_CONSUMED", commitSha = null;
-  try {
-    const updated = await gh("PUT", job.prefix + "/contents/" + job.target, {
-      message: REPAIR_PREFIX + job.pr.number + " - " + change.summary.slice(0, 100),
-      content: Buffer.from(change.replacement, "utf8").toString("base64"),
-      sha: job.current.sha, branch: job.pr.head.ref
+  if (handoff) {
+    return handoff({
+      proposal: {
+        repository: job.repoName, prNumber: job.pr.number,
+        issueNumber: job.bound.number, target: job.target,
+        expectedHeadSha: job.sha, expectedBlobSha: job.current.sha,
+        replacement: change.replacement, summary: change.summary
+      },
+      review: { risk: judgment.risk, reason: judgment.reason }, policy
     });
-    commitSha = updated?.commit?.sha || null;
-    status = "ONE_REPAIR_COMMIT_PUSHED_CI_UNVERIFIED";
-  } finally {
-    await receipt({ status, repository: job.repoName, pr: job.pr.number,
-      oldHeadSha: job.sha, repairCommitSha: commitSha, target: job.target,
-      skepticRisk: judgment.risk });
   }
-  return { status, repository: job.repoName, pr: job.pr.number, commitSha,
-    note: "Draft PR unchanged; CI must run on the new SHA, then be reverified." };
+  return { status: "DRY_RUN_REVIEW_ACCEPTED_NO_WRITE",
+    repository: job.repoName, pr: job.pr.number, target: job.target,
+    sha: job.sha, review: judgment.reason, patchSummary: change.summary };
 }
 
 export async function main(argv = process.argv.slice(2)) {
   const action = argv[0] || "dry-run";
-  if (!["dry-run", "run"].includes(action) || argv.length > 1)
-    throw new Error("Usage: repo-steward-repair.mjs [dry-run|run]");
+  if (action !== "dry-run" || argv.length > 1)
+    throw new Error("Legacy direct repair writes disabled. Use steward:repair:handoff, then steward:governed-repair.");
   const policy = parseVerificationPolicy();
   parseRepairModels();
-  if (action === "run" && process.env.PHIBOT_ENABLE_REPAIR_WRITES !== "1")
-    throw new Error("run requires PHIBOT_ENABLE_REPAIR_WRITES=1");
-  const outcome = await repairOne(githubClient(policy.token), policy,
-    { dryRun: action !== "run" });
+  const outcome = await repairOne(githubClient(policy.token), policy);
   process.stdout.write(JSON.stringify(outcome, null, 2) + "\n");
   return outcome;
 }
