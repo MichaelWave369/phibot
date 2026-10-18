@@ -111,7 +111,7 @@ export function registerRepoStewardReadTools(
   const allowlist = options.allowlist ?? (process.env.PHIBOT_REPO_ALLOWLIST ?? "")
     .split(",").map(item => item.trim()).filter(Boolean);
   if (allowlist.length > 30 || allowlist.some(item => !isRepo(item) ||
-      item.split("/")[0].toLowerCase() !== owner.toLowerCase()))
+      item.split("/")[0]?.toLowerCase() !== owner.toLowerCase()))
     throw new Error("PHIBOT_REPO_ALLOWLIST must be owner-scoped and contain at most 30 repositories");
   const allowed = new Set(allowlist);
   const token = options.token ?? process.env.PHIBOT_GITHUB_TOKEN ?? process.env.GH_TOKEN ?? "";
