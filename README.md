@@ -66,3 +66,7 @@ After the first real local Scout PASS, `npm run scout:handoff -- --receipt .phib
 The standalone Repo Steward can survey owned public GitHub repositories for open issues and README/roadmap checkboxes. After explicit per-repository allowlisting and local credential setup, it can ask a loopback Ollama model for **one** bounded, single-file edit and open a **draft PR** for an issue labeled `phibot-ready`. It never merges, deploys, runs target-repository commands or treats a roadmap checkbox as write authorization. This is **not yet integrated** with the main Reality Gate and needs field qualification.
 
 Run `npm run steward:scan` for a read-only inventory. See [Repo Steward setup, controls and limitations](docs/REPO_STEWARD.md) before using `steward:dry` or `steward:run`.
+
+### PHIBOT-19: Repo Steward queue and CI verifier
+
+Repo Steward can now skip already-attempted issue branches and move to the next eligible issue. The separate `npm run steward:verify` command checks SHA-bound GitHub Actions/check-status evidence for explicitly authorized draft PRs, including missing/failed/pending checks and stale branches. It is **read-only**, does not run tests locally, does **not** auto-merge or promote, and is not scheduled by default. See [the setup and qualifications](docs/REPO_STEWARD.md).
