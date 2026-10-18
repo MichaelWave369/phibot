@@ -139,9 +139,9 @@ export function registerGovernedRepairTool(registry: ToolCapabilityRegistry,
   const allowed = new Set(allowlist);
   const required = options.requiredChecks ?? (process.env.PHIBOT_REQUIRED_CHECKS ?? "")
     .split(",").map(s => s.trim()).filter(Boolean);
-  if (!required.length || required.length > 20 || new Set(required).size !== required.length ||
+  if (required.length > 20 || new Set(required).size !== required.length ||
       required.some(s => !/^[a-zA-Z0-9_ .:/-]{1,100}$/.test(s)))
-    throw new Error("Governed repair requires exact PHIBOT_REQUIRED_CHECKS configuration");
+    throw new Error("Invalid PHIBOT_REQUIRED_CHECKS configuration");
   const token = options.token ?? process.env.PHIBOT_GITHUB_TOKEN ?? "";
   const enabled = options.writeEnabled ?? process.env.PHIBOT_ENABLE_GOVERNED_REPAIR === "1";
   const transport = options.fetchImpl ?? fetch;
@@ -172,6 +172,7 @@ export function registerGovernedRepairTool(registry: ToolCapabilityRegistry,
     validate(input: unknown) { return validateRepairInput(input, owner, allowed); },
     async execute(input, context) {
       if (!enabled || !token) throw new Error("Governed repair writes disabled or token missing");
+      if (!required.length) throw new Error("PHIBOT_REQUIRED_CHECKS must name mandatory CI checks");
       const prefix = "/repos/" + input.repository;
       const repo = await gh("GET", prefix, context.signal);
       if (!obj(repo) || repo.full_name !== input.repository || repo.archived || repo.disabled ||
