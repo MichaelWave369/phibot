@@ -74,3 +74,7 @@ Repo Steward can now skip already-attempted issue branches and move to the next 
 ### PHIBOT-20: PatchBot + SkepticBot CI repair (candidate)
 
 `npm run steward:repair:dry` can inspect an explicitly authorized PhiBot draft PR with **failed GitHub CI**, ask a local PatchBot model for a bounded repair, and have a different local SkepticBot review it. Only an explicitly enabled `steward:repair` can commit **one** repair attempt to the existing draft PR branch. It neither runs repo code nor merges, deploys or promotes any PR; the next CI run is unverified until re-inspected. This is an **isolated opt-in candidate** outside PhiBot's main Reality Gate; no background schedule is installed. See [PHIBOT-20 field and threat model](docs/CI_REPAIR_SKEPTIC.md).
+
+### PHIBOT-21: governed GitHub RepoScout reads
+
+Two **read-only** GitHub capabilities, `repo.steward.discover` and `repo.steward.inspect`, are now registered in PhiBot's normal `ToolExecutor` registry with registry-owned `read` authority, manifest checks, explicit repository allowlisting, fail-closed validation and ledger receipts. See [governed RepoScout setup](docs/GOVERNED_REPO_SCOUT.md) and the least-authority example manifest `bots/examples/repo-scout.phibot.json`. The existing Repo Steward draft/repair scripts are **not** brought under the Reality Gate by this rung. No background job or GitHub write is enabled.
