@@ -111,3 +111,8 @@ Intended public URL after merging, enabling **Settings → Pages → Source: Git
 ### PHIBOT-28: operator-only local queue qualification
 
 After completing a real read-only job through the local Mission Control, run `npm run queue:qualify` in the same PhiBot clone and with the same `PHIBOT_REPO_ALLOWLIST`. It validates a completed job and its durable `ENQUEUED → LEASED → OBSERVED` transitions, checks evidence agreement, and saves one non-overwritable metadata-only SHA-256 self-report under ignored `.phibot/work-queue/qualification/`. If multiple jobs are complete, specify `-- create --job <64hex>`. A separate `verify --job <64hex>` checks the receipt's self-hash. This is **local consistency evidence, not independent remote attestation**. No network traffic, GitHub writes, model calls, or schedule is introduced. See [PHIBOT-28 Windows qualification guide](docs/LOCAL_QUEUE_FIELD_QUALIFICATION.md).
+
+
+### PHIBOT-29: read-only CI Inspector eligibility preflight
+
+`npm run queue:inspect:preflight -- --repo <allowlisted-owner/repo> --pr <number> --checks <exact-check-names>` first inspects a **real open, authorized PhiBot draft PR** and the live SHA-bound CI contexts using GitHub **GET** requests only. It rejects normal/merged PRs, revoked `phibot-ready` issues, stale branches, missing checks or moving PR heads before consuming a queue attempt. Only an explicit `--enqueue` locally records a bounded `repo.steward.inspect` job; the worker will independently recheck it when run. No GitHub writes, models, background schedule, or Reality Gate grants are added. See [CI Inspector preflight and field qualification guide](docs/CI_INSPECTOR_PREFLIGHT.md). A real eligible draft remains necessary for the field trial.
