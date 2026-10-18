@@ -77,10 +77,39 @@ The run can open **at most one draft PR**. Re-running for an issue whose phibot/
 
 - Public user-repository discovery is used; private repos are not scanned by this version even with a token.
 - Issue and roadmap discovery only examines up to 100 open issues and two documentation files per inspected repo. It does not infer every possible next step from commits, PR review threads or broken builds.
-- Only one existing file may change. No multi-file refactor, local test execution, dependency installation, CI verification or PR merge.
+- Only one existing file may change. No multi-file refactor, local test execution, dependency installation or PR merge. A separate read-only command can observe GitHub CI evidence for PhiBot draft PRs.
 - AI-authored code can still be wrong or unsafe. Draft PRs need CI and independent review.
 - The bounded source filter is **not** an OS sandbox or robust prompt-injection defense. Use a low-privilege local account, narrow token and ideally a disposable VM/container before wider trials.
-- The first eligible issue is selected by scan order, not semantic priority. Re-run after review, or remove the ready label if the task is unsuitable.
+- The queue walks eligible issues in scan order, skips ones with an existing `phibot/issue-N` branch, and tries the next. There is no semantic priority or retry of an existing branch; inspect existing PRs manually.
 - Next rung: attach repo.read, repo.patch and tests.run to the main PhiBot registry/Reality Gate, add per-repo policy and sandboxed tests, GitHub check gates, repeat protection, automatic risk scoring, and a two-bot reviewer. Only later consider policy-based auto-merge for a narrowly permitted low-risk class.
 
 **Ledger above ego: source text is evidence, proposed changes are proposals, and green CI is not the same as correct behavior.**
+
+## PHIBOT-19: read-only GitHub CI evidence after draft PRs
+
+The verifier observes CI results associated with the **exact head commit SHA**, not merely a branch name or a green label. It independently requires:
+
+- An explicitly allowlisted repository owned by `PHIBOT_OWNER`.
+- An open, **draft** PhiBot-created PR with the expected issue-branch naming and repo identity.
+- The linked issue is **still open**, labeled `phibot-ready`, with the original safe target path.
+- **Every** named required check is present and reports success; **all other observed current checks** must also succeed. Missing, pending, failed, malformed or truncated evidence fails closed.
+- The branch is not behind the current default branch and GitHub currently reports it mergeable. The PR is reread after the evidence to guard against changed head SHAs.
+
+This **does not** independently run target-repository tests. GitHub Actions and external CI run when configured in each target repo; PhiBot reads their reported outcomes and records a metadata receipt. It does not promote draft PRs, merge changes, mark issues done or deploy anything.
+
+Set an exact **required CI check name**, not a workflow filename. For PhiBot's own workflow, the job is called `test`. For other repositories, use the actual names listed in that repo's PR Checks tab.
+
+~~~powershell
+$env:PHIBOT_GITHUB_TOKEN = "<locally retrieved credential>"
+$env:PHIBOT_REPO_ALLOWLIST = "MichaelWave369/phibot"
+$env:PHIBOT_REQUIRED_CHECKS = "test"
+npm.cmd run steward:verify
+~~~
+
+If using a fine-grained token, also enable **Checks: read** and **Commit statuses: read** in the selected repositories. The verifier uses only GET requests and has no write code path for GitHub; its only local side effect is a metadata-only receipt in `.phibot/repo-steward/ledger.ndjson`. The same credential may have wider rights for draft generation, but a separate read-only token is preferable for scheduled verification.
+
+Status vocabulary: `CHECKS_PASS_REVIEW_ONLY`, `CHECKS_MISSING`, `CHECKS_PENDING`, `CHECKS_FAILED`, `CHECK_DATA_TRUNCATED`, `CHECK_DATA_INVALID`, `BASE_BEHIND_OR_UNVERIFIED`, `PR_MERGEABILITY_NOT_CONFIRMED`, `ISSUE_AUTHORIZATION_REVOKED`, and other explicit refusal states. **Even `CHECKS_PASS_REVIEW_ONLY` is not permission to merge.**
+
+The `steward:run` command can still create just **one draft PR per invocation**, and the verifier performs **no autonomous repair loop** yet. Scheduling is operator-configured, not enabled or installed by this change. This is an evidence gate, not a proof of correctness, sandbox, or independent security review.
+
+Future rung: connect a separate reviewer and test diagnostics to PhiBot's tool registry/Reality Gate before contemplating any automated promotion.
