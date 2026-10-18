@@ -31,7 +31,9 @@ function assertExact(input: unknown, keys: string[], action: string): asserts in
 }
 
 function isRepo(value: unknown): value is string {
-  return typeof value === "string" && /^[a-z0-9-]{1,39}\/[a-z0-9_.-]{1,100}$/i.test(value);
+  if (typeof value !== "string") return false;
+  const match = /^[a-z0-9-]{1,39}\/([a-z0-9_.-]{1,100})$/i.exec(value);
+  return !!match && match[1] !== "." && match[1] !== "..";
 }
 const SAFE_TARGET = /^(README\.md|(?:src|docs|test)\/[a-z0-9_.\/-]+\.(?:md|ts|tsx|js|mjs|json|css))$/i;
 function safeTarget(value: unknown): value is string {
@@ -44,7 +46,8 @@ function safeTarget(value: unknown): value is string {
 function issueTarget(body: unknown): string | null {
   if (typeof body !== "string") return null;
   const matches = [...body.matchAll(/^\s*Target file:\s*[\x60]?([^\s\x60]+)[\x60]?\s*$/gim)];
-  return matches.length === 1 && safeTarget(matches[0][1]) ? matches[0][1] : null;
+  const target = matches.length === 1 ? matches[0]?.[1] : undefined;
+  return safeTarget(target) ? target : null;
 }
 function readyIssue(value: unknown): boolean {
   return object(value) && value.state === "open" && !value.pull_request &&
@@ -56,7 +59,8 @@ function readyIssue(value: unknown): boolean {
 export function extractRepoTasks(content: string, source: string): RepoTask[] {
   return content.split(/\r?\n/).flatMap((line, idx) => {
     const match = line.match(/^\s*[-*]\s+\[ \]\s+(.{4,240})$/);
-    return match ? [{ source, line: idx + 1, text: match[1].trim() }] : [];
+    const task = match?.[1];
+    return task ? [{ source, line: idx + 1, text: task.trim() }] : [];
   }).slice(0, 20);
 }
 
@@ -72,19 +76,22 @@ function formatStatus(checks: unknown, statuses: unknown, required: string[]): {
   const cr = checks.check_runs, cs = statuses.statuses;
   if (cr.length > 100 || cs.length > 100 || (checks.total_count as number) > cr.length ||
       (statuses.total_count as number) > cs.length) return empty("CHECK_DATA_TRUNCATED");
-  const latest = new Map<string, { status: string; conclusion: string | null }>();
+  const latest = new Map<string, { name: string; status: string; conclusion: string | null }>();
   for (const run of [...cr].sort((a, b) => (Number(b?.id) || 0) - (Number(a?.id) || 0))) {
     if (!object(run) || typeof run.name !== "string" || latest.has(run.name)) continue;
-    latest.set(run.name, { status: String(run.status), conclusion: typeof run.conclusion === "string" ? run.conclusion : null });
+    latest.set(run.name, { name: run.name, status: String(run.status),
+      conclusion: typeof run.conclusion === "string" ? run.conclusion : null });
   }
   // Combined statuses are newest first, unlike independent Check Runs.
+  const statusContexts = new Map<string, { name: string; status: string; conclusion: null }>();
   for (const row of cs) {
-    if (!object(row) || typeof row.context !== "string" || latest.has(row.context)) continue;
-    latest.set(row.context, { status: String(row.state), conclusion: null });
+    if (!object(row) || typeof row.context !== "string" || statusContexts.has(row.context)) continue;
+    statusContexts.set(row.context, { name: row.context, status: String(row.state), conclusion: null });
   }
-  const missing = required.filter(name => !latest.has(name));
+  const missing = required.filter(name => !latest.has(name) && !statusContexts.has(name));
   const failed: string[] = [], pending: string[] = [];
-  for (const [name, state] of latest) {
+  for (const state of [...latest.values(), ...statusContexts.values()]) {
+    const name = state.name;
     if (state.status === "completed") {
       if (state.conclusion !== "success") failed.push(name);
     } else if (state.status === "failure" || state.status === "error") failed.push(name);
@@ -92,7 +99,7 @@ function formatStatus(checks: unknown, statuses: unknown, required: string[]): {
   }
   return { status: missing.length ? "CHECKS_MISSING" :
     failed.length ? "CHECKS_FAILED" : pending.length ? "CHECKS_PENDING" : "CHECKS_PASS_REVIEW_ONLY",
-    checkCount: latest.size, missing, failed, pending };
+    checkCount: latest.size + statusContexts.size, missing, failed, pending };
 }
 
 export function registerRepoStewardReadTools(
