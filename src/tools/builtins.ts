@@ -1,6 +1,7 @@
 import { ToolCapabilityRegistry } from "./registry.js";
 import { registerRepoStewardReadTools } from "./repo-steward-read.js";
 import { registerGovernedDraftTool } from "./repo-steward-draft.js";
+import { registerGovernedRepairTool } from "./repo-steward-repair-gated.js";
 import type { ToolCapability } from "./types.js";
 
 interface EchoInput {
@@ -82,9 +83,9 @@ export const addCapability: ToolCapability<AddInput, { total: number }> = {
 };
 
 export function createBuiltinToolRegistry(): ToolCapabilityRegistry {
-  return registerGovernedDraftTool(registerRepoStewardReadTools(
+  return registerGovernedRepairTool(registerGovernedDraftTool(registerRepoStewardReadTools(
     new ToolCapabilityRegistry()
       .register(echoCapability)
       .register(addCapability),
-  ));
+  )));
 }
