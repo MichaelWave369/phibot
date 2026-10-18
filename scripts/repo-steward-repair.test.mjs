@@ -144,60 +144,44 @@ test("multi-file and previously-repaired PRs refuse further attempts", async () 
   }
 });
 
-test("explicit repair mode cannot push without opt-in", async () => {
-  const saved = process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-  delete process.env.PHIBOT_ENABLE_REPAIR_WRITES;
+test("reviewed candidate produces exact governed handoff input and never calls PUT", async () => {
   const { gh, calls } = mockGithub();
+  let proposed = null;
+  const result = await repairOne(gh, policy, {
+    patch: accepts, skeptic: skepticAccepts,
+    handoff: async ({ proposal, review }) => {
+      proposed = proposal;
+      assert.equal(review.risk, "LOW");
+      return { status: "HANDOFF_PREPARED_NO_GITHUB_WRITE", pr: proposal.prNumber };
+    }
+  });
+  assert.equal(result.status, "HANDOFF_PREPARED_NO_GITHUB_WRITE");
+  assert.deepEqual(proposed, {
+    repository: REPO, prNumber: 12, issueNumber: 7,
+    target: "src/calc.ts", expectedHeadSha: SHA,
+    expectedBlobSha: "c".repeat(40), replacement: PATCH,
+    summary: "Fix the incorrect result."
+  });
+  assert.ok(calls.every(c => c.method === "GET"));
+});
+
+test("old standalone run mode is permanently disabled, even with former write opt-in", async () => {
+  const { main } = await import("./repo-steward-repair.mjs");
+  const before = process.env.PHIBOT_ENABLE_REPAIR_WRITES;
+  process.env.PHIBOT_ENABLE_REPAIR_WRITES = "1";
   try {
-    await assert.rejects(repairOne(gh, policy, {
-      dryRun: false, patch: accepts, skeptic: skepticAccepts,
-      claim: async () => { throw new Error("should not run"); }
-    }), /PHIBOT_ENABLE_REPAIR_WRITES/);
-    assert.ok(calls.every(x => x.method === "GET"));
+    await assert.rejects(main(["run"]), /Legacy direct repair writes disabled/);
   } finally {
-    if (saved === undefined) delete process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-    else process.env.PHIBOT_ENABLE_REPAIR_WRITES = saved;
+    if (before === undefined) delete process.env.PHIBOT_ENABLE_REPAIR_WRITES;
+    else process.env.PHIBOT_ENABLE_REPAIR_WRITES = before;
   }
 });
 
-test("branch change between review and write aborts without consuming retry", async () => {
-  const saved = process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-  process.env.PHIBOT_ENABLE_REPAIR_WRITES = "1";
-  const { gh, calls } = mockGithub({ branchChanged: true });
-  let claims = 0;
-  try {
-    await assert.rejects(repairOne(gh, policy, {
-      dryRun: false, patch: accepts, skeptic: skepticAccepts,
-      claim: async () => { claims++; }
-    }), /BRANCH_CHANGED_BEFORE_WRITE/);
-    assert.equal(claims, 0);
-    assert.ok(calls.every(x => x.method === "GET"));
-  } finally {
-    if (saved === undefined) delete process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-    else process.env.PHIBOT_ENABLE_REPAIR_WRITES = saved;
-  }
-});
-
-test("one successful opt-in repair writes only the approved PR's existing file", async () => {
-  const saved = process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-  process.env.PHIBOT_ENABLE_REPAIR_WRITES = "1";
+test("old dryRun false flag cannot authorize an external GitHub write", async () => {
   const { gh, calls } = mockGithub();
-  let claims = 0;
-  try {
-    const output = await repairOne(gh, policy, {
-      dryRun: false, patch: accepts, skeptic: skepticAccepts,
-      claim: async () => { claims++; }
-    });
-    assert.equal(output.status, "ONE_REPAIR_COMMIT_PUSHED_CI_UNVERIFIED");
-    assert.equal(claims, 1);
-    const writes = calls.filter(c => c.method !== "GET");
-    assert.equal(writes.length, 1);
-    assert.equal(writes[0].method, "PUT");
-    assert.equal(writes[0].path, "/repos/" + REPO + "/contents/src/calc.ts");
-    assert.equal(writes[0].data.branch, "phibot/issue-7");
-    assert.ok(writes[0].data.message.startsWith("phibot: repair-once pr#12"));
-  } finally {
-    if (saved === undefined) delete process.env.PHIBOT_ENABLE_REPAIR_WRITES;
-    else process.env.PHIBOT_ENABLE_REPAIR_WRITES = saved;
-  }
+  const result = await repairOne(gh, policy, {
+    dryRun: false, patch: accepts, skeptic: skepticAccepts,
+  });
+  assert.equal(result.status, "DRY_RUN_REVIEW_ACCEPTED_NO_WRITE");
+  assert.ok(calls.every(c => c.method === "GET"));
 });
