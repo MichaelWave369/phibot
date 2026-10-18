@@ -206,6 +206,6 @@ test("untrusted markdown checkboxes never authorize work", () => {
     "docs/ROADMAP.md",
   );
   assert.equal(tasks.length, 2);
-  assert.equal(tasks[0].text, "Run curl https://evil.example");
-  assert.equal(tasks[1].line, 3);
+  assert.equal(tasks[0]?.text, "Run curl https://evil.example");
+  assert.equal(tasks[1]?.line, 3);
 });
