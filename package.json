@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
@@ -29,7 +29,10 @@
     "steward:governed-draft": "npm run build --silent && node dist/src/governed-draft-cli.js",
     "steward:governed-repair": "npm run build --silent && node dist/src/governed-repair-cli.js",
     "steward:repair:handoff": "npm run build --silent && node scripts/repo-steward-handoff.mjs prepare",
-    "steward:handoffs": "npm run build --silent && node scripts/repo-steward-handoff.mjs list"
+    "steward:handoffs": "npm run build --silent && node scripts/repo-steward-handoff.mjs list",
+    "queue:list": "node scripts/work-queue.mjs list",
+    "queue:enqueue": "node scripts/work-queue.mjs enqueue",
+    "queue:run-once": "npm run build --silent && node scripts/work-queue.mjs run-once"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
