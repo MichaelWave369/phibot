@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   validateTargetPath, parseIssueTarget, eligibleIssue, extractOpenTasks,
-  validateReplacement, survey, main
+  validateReplacement, survey, selectPendingIssue, main
 } from "./repo-steward.mjs";
 
 test("single-file allowlist permits source, docs and tests only", () => {
@@ -84,5 +84,54 @@ test("write mode refuses unless explicitly authorized, before touching network",
   } finally {
     if (old === undefined) delete process.env.PHIBOT_ENABLE_DRAFT_PRS;
     else process.env.PHIBOT_ENABLE_DRAFT_PRS = old;
+  }
+});
+
+
+test("queue skips existing branches and reaches next eligible issue", async () => {
+  const old = process.env.PHIBOT_REPO_ALLOWLIST;
+  process.env.PHIBOT_REPO_ALLOWLIST = "MichaelWave369/Demo";
+  const repo = { name: "MichaelWave369/Demo", defaultBranch: "main", issues: [
+    { eligible: true, number: 1, target: "README.md" },
+    { eligible: true, number: 2, target: "README.md" }
+  ] };
+  const calls = [];
+  try {
+    const gh = async (method, resource, data, optional) => {
+      calls.push(resource);
+      if (resource.endsWith("/git/ref/heads/phibot/issue-1")) return { ref: "existing" };
+      if (resource.endsWith("/git/ref/heads/phibot/issue-2") && optional) return null;
+      if (resource.endsWith("/issues/2")) return { number: 2, state: "open",
+        labels: [{ name: "phibot-ready" }], body: "Target file: README.md" };
+      if (resource.endsWith("/contents/README.md")) return { type: "file",
+        encoding: "base64", sha: "abc", content: Buffer.from("Before").toString("base64") };
+      throw new Error("Unexpected " + resource);
+    };
+    const selection = await selectPendingIssue(gh, { reports: [repo] });
+    assert.equal(selection.selected.issue.number, 2);
+    assert.equal(selection.skippedExisting, 1);
+    assert.ok(!calls.some(path => path.includes("/issues/1")));
+    assert.ok(calls.every(path => path.includes("/repos/")));
+  } finally {
+    if (old === undefined) delete process.env.PHIBOT_REPO_ALLOWLIST;
+    else process.env.PHIBOT_REPO_ALLOWLIST = old;
+  }
+});
+
+test("when all eligible branches exist the queue reports no work without trying generation", async () => {
+  const old = process.env.PHIBOT_REPO_ALLOWLIST;
+  process.env.PHIBOT_REPO_ALLOWLIST = "MichaelWave369/Demo";
+  try {
+    const selection = await selectPendingIssue(
+      async () => ({ ref: "exists" }),
+      { reports: [{ name: "MichaelWave369/Demo", issues: [
+        { eligible: true, number: 6, target: "README.md" }
+      ] }] }
+    );
+    assert.equal(selection.selected, null);
+    assert.equal(selection.skippedExisting, 1);
+  } finally {
+    if (old === undefined) delete process.env.PHIBOT_REPO_ALLOWLIST;
+    else process.env.PHIBOT_REPO_ALLOWLIST = old;
   }
 });
