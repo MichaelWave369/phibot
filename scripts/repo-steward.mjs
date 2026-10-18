@@ -168,9 +168,12 @@ async function executeOne(gh, report, dryRun) {
   const prefix = "/repos/" + repo.name;
   if (await gh("GET", prefix + "/git/ref/heads/" + branch, undefined, true))
     return { status: "BRANCH_ALREADY_EXISTS", repo: repo.name, issue: issue.number };
+  const freshIssue = await gh("GET", prefix + "/issues/" + issue.number);
+  if (!eligibleIssue(freshIssue) || parseIssueTarget(freshIssue.body) !== target)
+    return { status: "ISSUE_CHANGED", repo: repo.name, issue: issue.number };
   const source = await getSource(gh, repo.name, target);
   if (!source) return { status: "SOURCE_UNAVAILABLE_OR_TOO_LARGE", repo: repo.name, issue: issue.number };
-  const patch = await propose(issue, source.content, target);
+  const patch = await propose(freshIssue, source.content, target);
   if (!validateReplacement(source.content, patch.replacement))
     return { status: "PATCH_REJECTED", repo: repo.name, issue: issue.number };
   if (dryRun) return { status: "VALID_DRY_RUN", repo: repo.name, issue: issue.number, target, summary: patch.summary };
