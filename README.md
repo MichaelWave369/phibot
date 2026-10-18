@@ -78,3 +78,7 @@ Repo Steward can now skip already-attempted issue branches and move to the next 
 ### PHIBOT-21: governed GitHub RepoScout reads
 
 Two **read-only** GitHub capabilities, `repo.steward.discover` and `repo.steward.inspect`, are now registered in PhiBot's normal `ToolExecutor` registry with registry-owned `read` authority, manifest checks, explicit repository allowlisting, fail-closed validation and ledger receipts. See [governed RepoScout setup](docs/GOVERNED_REPO_SCOUT.md) and the least-authority example manifest `bots/examples/repo-scout.phibot.json`. The existing Repo Steward draft/repair scripts are **not** brought under the Reality Gate by this rung. No background job or GitHub write is enabled.
+
+### PHIBOT-22: exact Reality-Gated documentation draft writes
+
+`repo.steward.draft` is a real registered `write` tool that **always** requires a signed, single-use Reality Gate grant bound to the entire proposal, even if a bot manifest says `write: true`. Its first scope is only one approved existing README/docs Markdown file on an allowlisted repo, committed to one new `phibot/issue-N` branch and opened as an unverified **draft PR**. No code edits, merging, deployment, or scheduling. The interactive `npm run steward:governed-draft -- <proposal.json>` requires operator confirmation of the exact digest and local opt-in environment settings. See [governed write guide](docs/GOVERNED_DRAFT_GATE.md).

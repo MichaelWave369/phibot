@@ -12,6 +12,8 @@ export interface ToolCapability<TInput = unknown, TOutput = unknown> {
   description: string;
   actionClass: "read" | "propose" | "write" | "deploy";
   external: boolean;
+  /** Certain high-risk capabilities require a Reality Gate grant even if the manifest says true. */
+  requiresGate?: boolean;
   validate(input: unknown): TInput;
   execute(input: TInput, context: ToolExecutionContext): Promise<TOutput>;
 }
