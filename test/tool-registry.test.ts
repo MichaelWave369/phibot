@@ -8,7 +8,7 @@ test("lists typed built-in capabilities", () => {
 
   assert.deepEqual(
     capabilities.map((item) => item.id),
-    ["math.add", "repo.steward.discover", "repo.steward.draft", "repo.steward.inspect", "utility.echo"],
+    ["math.add", "repo.steward.discover", "repo.steward.draft", "repo.steward.inspect", "repo.steward.repair", "utility.echo"],
   );
   assert.equal(
     capabilities.find((item) => item.id === "math.add")?.actionClass,

@@ -26,7 +26,8 @@
     "steward:verify": "node scripts/repo-steward-verify.mjs",
     "steward:repair:dry": "node scripts/repo-steward-repair.mjs dry-run",
     "steward:repair": "node scripts/repo-steward-repair.mjs run",
-    "steward:governed-draft": "npm run build --silent && node dist/src/governed-draft-cli.js"
+    "steward:governed-draft": "npm run build --silent && node dist/src/governed-draft-cli.js",
+    "steward:governed-repair": "npm run build --silent && node dist/src/governed-repair-cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
