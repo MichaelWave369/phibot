@@ -39,6 +39,10 @@ function fillJobs(jobs) {
     name.append(create("div", "jobcap", job.capability.replace("repo.steward.", "")));
     name.append(create("div", "jobmeta", job.repository +
       (job.prNumber ? " · PR #" + job.prNumber : "") + " · " + job.id.slice(0, 10)));
+    if (job.leaseExpiresAt) name.append(create("div", "jobmeta",
+      "Lease expires " + new Date(job.leaseExpiresAt).toLocaleTimeString()));
+    else if (job.lastOutcome) name.append(create("div", "jobmeta",
+      job.lastOutcome.replaceAll("_", " ")));
     const state = create("td");
     state.append(create("span", "state " + job.state, job.state));
     const attempts = create("td", "digits", job.attempts + " / 2");
@@ -99,7 +103,8 @@ function applyState(s) {
   $("max-ms").textContent = (s.budget.maxMs / 1000) + "s / 300s";
   $("jobs-meter").style.width = (s.budget.maxJobs * 20) + "%";
   $("time-meter").style.width = (s.budget.maxMs / 300000 * 100) + "%";
-  $("lock").textContent = s.worker?.state === "LOCK_PRESENT" ? "ACTIVE / PRESENT" :
+  $("lock").textContent = s.worker?.state === "LOCK_PRESENT"
+    ? "ACTIVE" + (s.worker.expiry ? " · " + new Date(s.worker.expiry).toLocaleTimeString() : "") :
     s.worker?.state === "NO_LOCK" ? "CLEAR" : "VERIFY LOCALLY";
   fillRepos(s.allowlist || []);
   $("updated").textContent = "Last local refresh " + new Date().toLocaleTimeString();
