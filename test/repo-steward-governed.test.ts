@@ -57,7 +57,8 @@ function harness(overrides: Record<string, unknown> = {}) {
     ];
     else if (path.endsWith("/pulls/12")) value = {
       ...pr, ...(overrides.pr || {}),
-      head: overrides.changeHead ? { ...pr.head, sha: "b".repeat(40) } : pr.head,
+      head: overrides.changeHead && calls.filter(c => c.url === path).length > 1
+        ? { ...pr.head, sha: "b".repeat(40) } : pr.head,
     };
     else if (path.endsWith("/issues/7")) value = overrides.revoke
       ? { ...issue, labels: [] } : issue;
