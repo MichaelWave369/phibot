@@ -150,8 +150,8 @@ function BudgetCard({ jobs, passNumber }) {
   const remaining = jobs.filter(j => j.status === "queued").length;
   return <section className="panel budget-panel">
     <div className="section-kicker">03 / OPERATIONAL LIMITS</div><h2>Budget guardrails</h2>
-    <div className="budget-item"><div><span>Tasks per simulated pass</span><b>2 <small>/ 5 hard max</small></b></div><div className="track"><i style={{ width: "40%" }}/></div></div>
-    <div className="budget-item"><div><span>Wall-time ceiling (real worker)</span><b>60s <small>/ 300s</small></b></div><div className="track"><i style={{ width: "20%" }}/></div></div>
+    <div className="budget-item"><div><span>Tasks per simulated pass</span><b>2 <small>/ 5 hard max</small></b></div><div className="track"><i className="jobs-bar"/></div></div>
+    <div className="budget-item"><div><span>Wall-time ceiling (real worker)</span><b>60s <small>/ 300s</small></b></div><div className="track"><i className="time-bar"/></div></div>
     <div className="budget-row"><span>Available demo jobs</span><strong>{remaining}</strong></div>
     <div className="budget-row"><span>Simulated passes</span><strong>{passNumber}</strong></div>
     <div className="budget-row"><span>GitHub writes</span><strong className="teal">Not available</strong></div>
