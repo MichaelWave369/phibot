@@ -86,7 +86,12 @@ async function appendEvent(dir, event) {
       ...event }) + "\n", { encoding: "utf8", mode: 0o600 });
 }
 function identity(capability, input) {
-  return hash(JSON.stringify({ capability, input }));
+  // Canonical field order makes equivalent JSON inputs share one durable ID.
+  const normalized = capability === "repo.steward.discover"
+    ? { repository: input.repository }
+    : { repository: input.repository, prNumber: input.prNumber,
+        requiredChecks: input.requiredChecks };
+  return hash(JSON.stringify({ capability, input: normalized }));
 }
 export async function enqueue({ capability, input }, policy, dir = QUEUE_HOME) {
   const validated = validateQueueRequest(capability, input, policy);
@@ -280,7 +285,12 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
     return result;
   }
   if (command === "enqueue" && argv.length === 3) {
-    const input = JSON.parse(argv[2]);
+    const rawInput = argv[2].startsWith("@")
+      ? await readFile(resolve(argv[2].slice(1)), "utf8")
+      : argv[2];
+    if (Buffer.byteLength(rawInput, "utf8") > 2500)
+      throw new Error("QUEUE_INPUT_TOO_LARGE");
+    const input = JSON.parse(rawInput);
     const result = await enqueue({ capability: argv[1], input }, policy);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     return result;
@@ -301,8 +311,10 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
       authority: { read: true, propose: false, write: false, deploy: false },
       escalation: { target: "human", confidenceBelow: 0.9 }
     });
-    const executor = new ToolExecutor(registry, ledger, { timeoutMs: 30000 });
-    const result = await runQueue({ policy, budget: queueBudget(env),
+    const budget = queueBudget(env);
+    const executor = new ToolExecutor(registry, ledger,
+      { timeoutMs: Math.min(30000, budget.maxMs) });
+    const result = await runQueue({ policy, budget,
       execute: request => executor.execute(manifest, request) });
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
     return result;
