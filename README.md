@@ -99,3 +99,10 @@ Two **read-only** GitHub capabilities, `repo.steward.discover` and `repo.steward
 ### PHIBOT-26: local operations dashboard
 
 Run `npm run queue:dashboard` for an original, dependency-free, **localhost-only** interface showing persisted RepoScout queue jobs, budgets, lease/deadline information, worker lock, recent receipt transitions and read-only observation results. The dashboard starts **view-only**. To enable *manual* enqueue and one bounded read pass, explicitly start it with `PHIBOT_QUEUE_DASHBOARD_ACTIONS=1`. It uses only the existing read-only ToolExecutor manifest and queue worker. No schedule, model inference, branch creation, Reality Gate grant issuing, GitHub write, merge or deployment is introduced. See [Windows setup and local security model](docs/LOCAL_QUEUE_DASHBOARD.md).
+
+
+### PhiBot Mission Control: public React Pages showcase
+
+An original React/Vite version of the Mission Control dashboard lives in [`site/`](site/), with GitHub Pages deployment through [`pages.yml`](.github/workflows/pages.yml). It is a **public interactive simulation** with illustrative repository jobs, sample receipts, demo queue controls, and a governance walkthrough. **It cannot access the local work queue, credentials, Reality Gate, Ollama, or GitHub write APIs.** The real Node operator dashboard remains private to `127.0.0.1`.
+
+Intended public URL after merging, enabling **Settings → Pages → Source: GitHub Actions** if needed, and verifying successful deployment: **https://michaelwave369.github.io/phibot/**. See [public showcase deployment and safety guide](docs/PUBLIC_MISSION_CONTROL.md).
