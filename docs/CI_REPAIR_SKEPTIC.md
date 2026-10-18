@@ -1,5 +1,8 @@
 # PHIBOT-20: SkepticBot and one-attempt CI repair
 
+> **PHIBOT-24 safety update:** The legacy `steward:repair` direct-write command is now disabled. To generate a reviewed model proposal without any GitHub writes, use `npm run steward:repair:handoff`, then inspect the saved JSON and manually invoke `npm run steward:governed-repair -- <proposal.json>`. Read [PHIBOT-24 handoff guide](REPAIR_HANDOFF_QUEUE.md).
+
+
 This is an **opt-in, local Ollama proof of concept** for an isolated Repo Steward runner. It is not yet registered as a PhiBot Reality Gate capability and it is not an autonomous multi-step agent running in the background. No schedule, remote model inference, repository code execution, or deployment is added.
 
 ## Exact candidate eligibility
@@ -40,9 +43,10 @@ $env:PHIBOT_REVIEW_MODEL = "granite4.2:8b"
 # Dry run: local model calls and GitHub reads, but no remote writes
 npm.cmd run steward:repair:dry
 
-# Only after inspecting trial results and explicitly opting in
-$env:PHIBOT_ENABLE_REPAIR_WRITES = "1"
-npm.cmd run steward:repair
+# After inspecting trial results, prepare a local governed proposal
+# Legacy direct-write command retired in PHIBOT-24.
+# Use reviewed handoff and separate human-approved Reality Gate workflow:
+npm.cmd run steward:repair:handoff
 ```
 
 Check names are exact GitHub check **job/context** names, not filenames or workflow titles. Try a disposable, tightly allowlisted repository first. The local PC and both models must be available while the command runs.
