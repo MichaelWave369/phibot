@@ -91,9 +91,12 @@ export class ToolExecutor {
     const authority = evaluateManifestAuthority(manifest, capability.actionClass);
     let gateGrantId: string | undefined;
     let gateRequestId: string | undefined;
+    const gateReason = capability.requiresGate === true
+      ? `Explicit Reality Gate grant required for ${capability.id}.`
+      : authority.reason;
 
-    if (!authority.allowed) {
-      if (!authority.gated) {
+    if (!authority.allowed || capability.requiresGate === true) {
+      if (!authority.allowed && !authority.gated) {
         const receipt = await record("blocked", authority.reason, {
           tool: {
             capability: capability.id,
@@ -111,7 +114,7 @@ export class ToolExecutor {
       }
 
       if (!this.realityGate) {
-        const receipt = await record("escalate", authority.reason, {
+        const receipt = await record("escalate", gateReason, {
           tool: {
             capability: capability.id,
             actionClass: capability.actionClass,
@@ -122,7 +125,7 @@ export class ToolExecutor {
         return {
           status: "gated",
           capability: capability.id,
-          error: authority.reason,
+          error: gateReason,
           receipt,
         };
       }
@@ -152,7 +155,7 @@ export class ToolExecutor {
         return {
           status: "gated",
           capability: capability.id,
-          error: authority.reason,
+          error: gateReason,
           gateRequest,
           receipt,
         };
