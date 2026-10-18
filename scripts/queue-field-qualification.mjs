@@ -258,7 +258,8 @@ export async function saveFieldReceipt({ policy, dir = QUEUE_HOME, jobId } = {})
 export async function main(argv = process.argv.slice(2)) {
   const [action = "create", flag, value] = argv;
   if (!["create", "verify"].includes(action) ||
-      (argv.length !== 1 && !(argv.length === 3 && flag === "--job")) ||
+      (argv.length !== 0 && argv.length !== 1 &&
+        !(argv.length === 3 && flag === "--job")) ||
       (argv.length === 3 && !HEX64.test(value || "")) ||
       (action === "verify" && argv.length !== 3))
     throw new Error("Usage: npm run queue:qualify [-- create [--job 64hex] | verify --job 64hex]");
