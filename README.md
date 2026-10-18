@@ -94,3 +94,8 @@ Two **read-only** GitHub capabilities, `repo.steward.discover` and `repo.steward
 ### PHIBOT-25: bounded read-only work queue
 
 `npm run queue:enqueue -- <capability> '<JSON>'` accepts only the governed GitHub **read** tools `repo.steward.discover` and `repo.steward.inspect`, with an explicit owner-scoped repository allowlist. `npm run queue:run-once` invokes the existing PhiBot ToolExecutor under a read-only manifest, processes at most two attempts per invocation by default, and stores local job/lease/event evidence under ignored `.phibot/work-queue/`. `npm run queue:list` shows metadata and observation status without raw GitHub content. There are no installed timers, autonomous grants, model calls, GitHub writes, merges or deployments. See [bounded queue operations and recovery](docs/BOUNDED_WORK_QUEUE.md).
+
+
+### PHIBOT-26: local operations dashboard
+
+Run `npm run queue:dashboard` for an original, dependency-free, **localhost-only** interface showing persisted RepoScout queue jobs, budgets, lease/deadline information, worker lock, recent receipt transitions and read-only observation results. The dashboard starts **view-only**. To enable *manual* enqueue and one bounded read pass, explicitly start it with `PHIBOT_QUEUE_DASHBOARD_ACTIONS=1`. It uses only the existing read-only ToolExecutor manifest and queue worker. No schedule, model inference, branch creation, Reality Gate grant issuing, GitHub write, merge or deployment is introduced. See [Windows setup and local security model](docs/LOCAL_QUEUE_DASHBOARD.md).
