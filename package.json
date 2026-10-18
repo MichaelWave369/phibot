@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
@@ -19,7 +19,10 @@
     "cloud:inspect": "npm run build --silent && node dist/src/cloud-inspect-cli.js",
     "scout:shadow": "npm run build --silent && node dist/src/scout-shadow-cli.js",
     "scout:field": "npm run build --silent && node dist/src/scout-field-cli.js",
-    "scout:handoff": "npm run build --silent && node dist/src/scout-handoff-cli.js"
+    "scout:handoff": "npm run build --silent && node dist/src/scout-handoff-cli.js",
+    "steward:scan": "node scripts/repo-steward.mjs scan",
+    "steward:dry": "node scripts/repo-steward.mjs dry-run",
+    "steward:run": "node scripts/repo-steward.mjs run"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

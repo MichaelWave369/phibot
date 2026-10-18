@@ -60,3 +60,9 @@ When `scout:field` or `scout:shadow` is invoked, local Ollama receives an **advi
 ## PHIBOT-15: Read-only Scout receipt handoff
 
 After the first real local Scout PASS, `npm run scout:handoff -- --receipt .phibot/scout-qualification/scout-XXXXX --ack-local-self-report` validates the local hashed qualification record and prints a **redacted advisory handoff** for operator copying. No model, network call, permission, memory admission, or Vessie connection occurs. See [PHIBOT-15](docs/SCOUT_RECEIPT_HANDOFF.md).
+
+## Repo Steward (candidate, opt-in)
+
+The standalone Repo Steward can survey owned public GitHub repositories for open issues and README/roadmap checkboxes. After explicit per-repository allowlisting and local credential setup, it can ask a loopback Ollama model for **one** bounded, single-file edit and open a **draft PR** for an issue labeled `phibot-ready`. It never merges, deploys, runs target-repository commands or treats a roadmap checkbox as write authorization. This is **not yet integrated** with the main Reality Gate and needs field qualification.
+
+Run `npm run steward:scan` for a read-only inventory. See [Repo Steward setup, controls and limitations](docs/REPO_STEWARD.md) before using `steward:dry` or `steward:run`.
