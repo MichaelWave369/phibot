@@ -1,0 +1,12 @@
+{
+  "id": "repo-scout",
+  "name": "RepoScout",
+  "version": "0.1.0",
+  "role": "governed_repository_scout",
+  "description": "Read-only GitHub roadmap and CI evidence under manifest authority.",
+  "model": { "provider": "dry-run", "name": "deterministic" },
+  "memory": { "scope": "repo", "maxDepth": 2 },
+  "capabilities": ["repo.steward.discover", "repo.steward.inspect"],
+  "authority": { "read": true, "propose": true, "write": false, "deploy": false },
+  "escalation": { "target": "vessie", "confidenceBelow": 0.75 }
+}
