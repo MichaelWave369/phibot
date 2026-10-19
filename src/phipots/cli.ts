@@ -7,14 +7,15 @@ import { runPhiPotsDryRun } from "./crew.js";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  if (args.length !== 1 || args[0] === "--help" || args[0] === "-h") {
+  const idea = args[0];
+  if (args.length !== 1 || idea === undefined || idea === "--help" || idea === "-h") {
     console.error('Usage: npm run phipots:dry -- "Describe one project idea"');
     if (args.length !== 1 || args[0] !== "--help" && args[0] !== "-h") {
       process.exitCode = 1;
     }
     return;
   }
-  const report = await runPhiPotsDryRun(args[0]);
+  const report = await runPhiPotsDryRun(idea);
   console.log(JSON.stringify(report, null, 2));
 }
 
