@@ -34,7 +34,8 @@
     "queue:enqueue": "node scripts/work-queue.mjs enqueue",
     "queue:run-once": "npm run build --silent && node scripts/work-queue.mjs run-once",
     "queue:dashboard": "npm run build --silent && node scripts/queue-dashboard.mjs",
-    "queue:qualify": "node scripts/queue-field-qualification.mjs"
+    "queue:qualify": "node scripts/queue-field-qualification.mjs",
+    "phipots:dry": "npm run build --silent && node dist/src/phipots/cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

@@ -1,6 +1,6 @@
 # PhiPots: proposed six-role crew for PhiBot
 
-**Status: DESIGN / PUBLIC SHOWCASE ONLY.** PhiPots is the proposed team name for specialist PhiBot roles. **MikeyBot6000** is the playful nickname for the future building crew, not a separately deployed orchestration service.
+**Status: PUBLIC DESIGN SHOWCASE + LOCAL DETERMINISTIC REHEARSAL.** The public React role roster remains a design preview. PHIBOT-31 now adds an operator-only, six-role, no-tools template pass through real PhiBotRuntime lifecycles; it is **not a live agent crew**. See [local dry-run protocol](PHIPOTS_LOCAL_DRY_RUN.md). PhiPots is the proposed team name for specialist PhiBot roles. **MikeyBot6000** is the playful nickname for the future building crew, not a separately deployed orchestration service.
 
 This document is a candidate coordination protocol. The public React Mission Control crew page is a static, selectable roster. The buttons switch browser display state only. There is **no autonomous agent fleet**, agent spawn, model invocation, GitHub API call, CI execution, write, merge, deployment, persistent memory, scheduler, or remote PhiBot connection in this addition.
 

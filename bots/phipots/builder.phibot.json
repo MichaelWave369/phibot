@@ -1,0 +1,26 @@
+{
+  "id": "phipot-builder",
+  "name": "BuilderBot",
+  "version": "0.1.0",
+  "role": "phipots_builder",
+  "description": "Plan bounded original implementations",
+  "model": {
+    "provider": "dry-run",
+    "name": "deterministic"
+  },
+  "memory": {
+    "scope": "task",
+    "maxDepth": 0
+  },
+  "capabilities": [],
+  "authority": {
+    "read": false,
+    "propose": false,
+    "write": false,
+    "deploy": false
+  },
+  "escalation": {
+    "target": "human",
+    "confidenceBelow": 0.75
+  }
+}

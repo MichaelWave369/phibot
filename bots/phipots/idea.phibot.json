@@ -1,0 +1,26 @@
+{
+  "id": "phipot-idea",
+  "name": "IdeaBot",
+  "version": "0.1.0",
+  "role": "phipots_idea",
+  "description": "Capture idea scope and acceptance criteria",
+  "model": {
+    "provider": "dry-run",
+    "name": "deterministic"
+  },
+  "memory": {
+    "scope": "task",
+    "maxDepth": 0
+  },
+  "capabilities": [],
+  "authority": {
+    "read": false,
+    "propose": false,
+    "write": false,
+    "deploy": false
+  },
+  "escalation": {
+    "target": "human",
+    "confidenceBelow": 0.75
+  }
+}
