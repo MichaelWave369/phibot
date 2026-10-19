@@ -259,7 +259,7 @@ export default function App() {
     setJobs(START_JOBS);setEvents(START_EVENTS);setFilter("all");setSelectedId(null);setPasses(0);
   }
   const menu = [
-    ["overview","grid","Overview"],["work","list","Work queue"],["crew","cpu","PhiPots crew"],["governance","shield","Governance"],["ledger","receipt","Ledger"],
+    ["overview","grid","Overview"],["work","list","Work queue"],["crew","cpu","PhiPots"],["governance","shield","Governance"],["ledger","receipt","Ledger"],
   ];
   return <div className="app-shell">
     <aside className="sidebar">
