@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import PhiPots from "./PhiPots.jsx";
 
 const GITHUB = "https://github.com/MichaelWave369/phibot";
 const START_JOBS = [
@@ -258,7 +259,7 @@ export default function App() {
     setJobs(START_JOBS);setEvents(START_EVENTS);setFilter("all");setSelectedId(null);setPasses(0);
   }
   const menu = [
-    ["overview","grid","Overview"],["work","list","Work queue"],["governance","shield","Governance"],["ledger","receipt","Ledger"],
+    ["overview","grid","Overview"],["work","list","Work queue"],["crew","cpu","PhiPots crew"],["governance","shield","Governance"],["ledger","receipt","Ledger"],
   ];
   return <div className="app-shell">
     <aside className="sidebar">
@@ -290,6 +291,7 @@ export default function App() {
         </div><div className="side-col"><BudgetCard jobs={jobs} passNumber={passes}/><DemoEnqueue onEnqueue={enqueueDemo}/></div></div>
       </>}
       {tab==="work" && <><div className="page-heading"><div className="section-kicker">OPERATOR VISIBILITY</div><h1>Work <em>queue.</em></h1><p>Explore the jobs, simulated attempts, and results. This public page never contacts GitHub or the localhost service.</p></div><div className="content-grid"><div className="primary-col"><JobTable jobs={jobs} filter={filter} onFilter={setFilter} onSelect={setSelectedId} selectedId={selectedId} detailed={selectedJob}/><Ledger events={events}/></div><div className="side-col"><BudgetCard jobs={jobs} passNumber={passes}/><DemoEnqueue onEnqueue={enqueueDemo}/><button className="btn primary full" onClick={simulate} disabled={!totals.queued}><Icon name="play" size={17}/> Run simulated pass</button><button className="btn outline full" onClick={reset}><Icon name="reset" size={17}/> Reset sample</button></div></div></>}
+      {tab==="crew" && <PhiPots/>}
       {tab==="governance" && <><div className="page-heading"><div className="section-kicker">TRUST BY DESIGN</div><h1>Governance <em>first.</em></h1><p>A good assistant needs boundaries that are clearer than its ambitions. Here is the architecture behind the showcase.</p></div><Architecture/></>}
       {tab==="ledger" && <><div className="page-heading"><div className="section-kicker">PROVENANCE / RECEIPTS</div><h1>Show the <em>evidence.</em></h1><p>These illustrative receipts explain how local evidence is tracked, without publishing real queue contents or untrusted source text.</p></div><Ledger events={events}/><div className="ledger-about"><Icon name="lock" size={20}/><div><strong>No secret state is published here.</strong><p>The real ledger and work-queue live under the local operator's ignored <code>.phibot/</code> directory. This demo does not load, store, or transmit them.</p></div></div></>}
       <About/>
