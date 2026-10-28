@@ -1,0 +1,46 @@
+name: PhiBot R1-H Read-Only Agentora Task Inspection
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_b64:
+        description: 'Paste the one-line phibot-review-packet.base64url.txt from a manual Agentora draft_review artifact. Public toy fixture only.'
+        required: true
+        type: string
+
+# Operator-pasted, bounded source data only. No model, clone of target repo,
+# GitHub API calls, branch, issue, PR, commit, merging or deployment.
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Inspect fixed R1-H toy handoff without execution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      R1H_PACKET_B64: ${{ inputs.packet_b64 }}
+    steps:
+      - name: Check out PhiBot inspector without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Prepare Node without installing packages or invoking models
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate exact source preview, SHA-256 and zero authority
+        shell: bash
+        run: |
+          node scripts/r1h-readonly-inspect.mjs > phibot-r1h-inspection.json
+          node -e 'const r = require("./phibot-r1h-inspection.json"); if (r.status !== "INSPECTED_EXACT_TOY_SCOPE_REVIEW_ONLY" || r.repository_writes !== false || r.eligible_for_merge !== false || r.reality_gate_granted !== false) process.exit(2)'
+
+      - name: Upload metadata-only read-only inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: phibot-r1h-readonly-inspection-${{ github.run_id }}
+          path: phibot-r1h-inspection.json
+          if-no-files-found: error
+          retention-days: 7
