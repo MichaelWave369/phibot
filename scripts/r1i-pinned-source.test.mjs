@@ -72,7 +72,7 @@ function mockRead({ source = ORIGINAL, commitSha = PIN, mainSha = PIN, reportedB
   const bytes = Buffer.from(source);
   const expected = fixedPaths(PIN);
   const objects = {
-    [expected.commit]: { sha: commitSha, commit: { tree: { sha: 'b'.repeat(40) } } },
+    [expected.commit]: { sha: commitSha, tree: { sha: 'b'.repeat(40) } },
     [expected.contents]: {
       path: filePath, name: 'r1h-demo-label.py',
       type: responseType, encoding: 'base64',
