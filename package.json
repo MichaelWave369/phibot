@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs && node --test scripts/r1h-readonly-inspect.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
