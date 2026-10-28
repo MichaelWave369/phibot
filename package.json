@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs && node --test scripts/r1h-readonly-inspect.test.mjs && node --test scripts/r1i-pinned-source.test.mjs && node --test scripts/r1j-trial.test.mjs",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs && node --test scripts/repo-ci-preflight.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
@@ -35,7 +35,7 @@
     "queue:run-once": "npm run build --silent && node scripts/work-queue.mjs run-once",
     "queue:dashboard": "npm run build --silent && node scripts/queue-dashboard.mjs",
     "queue:qualify": "node scripts/queue-field-qualification.mjs",
-    "phipots:dry": "npm run build --silent && node dist/src/phipots/cli.js"
+    "queue:inspect:preflight": "node scripts/repo-ci-preflight.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
