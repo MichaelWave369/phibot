@@ -1,0 +1,47 @@
+name: PhiBot R1-I Pinned Agentora Source Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_b64:
+        description: 'Paste the same public toy R1-H packet line from Agentora. Read-only GitHub GET verification.'
+        required: true
+        type: string
+
+# Intentionally no push/PR/schedule trigger or GitHub write privileges.
+permissions:
+  contents: read
+
+jobs:
+  inspect-pinned-source:
+    name: Verify exact source at pinned commit (read-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      R1H_PACKET_B64: ${{ inputs.packet_b64 }}
+    steps:
+      - name: Check out PhiBot read-only verifier
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js built-ins only
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Read exact GitHub commit and file, refuse changed main
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/r1i-pinned-source.mjs
+          node -e 'const r=require("./phibot-r1i-pinned-source-review.json"); if(r.status !== "REMOTE_EXACT_SOURCE_VERIFIED_REVIEW_ONLY" || r.source_commit_verified_against_remote !== true || r.main_head_matches_pinned_commit !== true || r.source_bytes_match_packet !== true || r.repository_writes !== false || r.eligible_for_merge !== false || r.reality_gate_granted !== false) process.exit(2)'
+
+      - name: Upload metadata-only pinned source receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: phibot-r1i-pinned-source-${{ github.run_id }}
+          path: phibot-r1i-pinned-source-review.json
+          if-no-files-found: error
+          retention-days: 7
