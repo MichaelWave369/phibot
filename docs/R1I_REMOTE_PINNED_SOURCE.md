@@ -11,7 +11,7 @@ After merging this PhiBot PR:
 1. Open [PhiBot R1-I Pinned Agentora Source Verification](https://github.com/MichaelWave369/PhiBot/actions/workflows/r1i-pinned-source-verification.yml).
 2. Select **Run workflow** on `main`. Paste the **same single line** into `packet_b64`.
 3. Run the workflow. It performs a preliminary strict R1-H packet check, then exactly three GitHub **GET** requests:
-   - `GET /repos/MichaelWave369/Agentora/commits/{exact-packet-40-hex-sha}`, checking that the returned full SHA matches exactly and references a valid commit/tree.
+   - `GET /repos/MichaelWave369/Agentora/git/commits/{exact-packet-40-hex-sha}`, checking that the returned full SHA matches exactly and references a valid commit/tree.
    - `GET /repos/MichaelWave369/Agentora/contents/examples/development-board/r1h-demo-label.py?ref={exact-sha}`, checking file type, path, exact UTF-8 source **bytes**, SHA-256 of those bytes, and independently calculated Git blob SHA-1.
    - `GET /repos/MichaelWave369/Agentora/branches/main` to check that `main` **still equals the packet commit** at inspection time.
 4. On success, the run emits `REMOTE_EXACT_SOURCE_VERIFIED_REVIEW_ONLY`. Download its `phibot-r1i-pinned-source-...` artifact and inspect `phibot-r1i-pinned-source-review.json`.
