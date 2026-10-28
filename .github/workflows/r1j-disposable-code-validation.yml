@@ -1,0 +1,69 @@
+name: PhiBot R1-J Disposable Code Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_b64:
+        description: 'Paste the PUBLIC fixed Agentora R1-H toy packet base64url. No private code or credentials.'
+        required: true
+        type: string
+
+# Nothing runs on push, PR or a schedule. No GitHub repository write access.
+permissions:
+  contents: read
+
+jobs:
+  disposable-code-trial:
+    name: Pin original source, test one exact toy change, report only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      R1H_PACKET_B64: ${{ inputs.packet_b64 }}
+    steps:
+      - name: Read-only checkout of PhiBot test harness
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Use Node 22 built-ins for independent packet and source checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify packet with GitHub GET and stage exact toy source only
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/r1j-trial.mjs prepare
+
+      - name: Pull Python runtime image before offline execution
+        run: |
+          docker pull python:3.12-alpine
+
+      - name: Test exact candidate in bounded, non-root, offline read-only Docker
+        shell: bash
+        run: |
+          timeout 25s docker run --rm --pull=never \
+            --network none --read-only --user 65534:65534 \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --pids-limit 64 --memory 256m --cpus 1 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --mount "type=bind,src=${GITHUB_WORKSPACE}/r1j-scratch/candidate.py,dst=/work/candidate.py,readonly" \
+            --mount "type=bind,src=${GITHUB_WORKSPACE}/scripts/r1j-test-harness.py,dst=/work/test.py,readonly" \
+            python:3.12-alpine python -I -S -B /work/test.py /work/candidate.py \
+            > r1j-container-tests.json
+
+      - name: Independently validate exact source and five test results
+        run: |
+          node scripts/r1j-trial.mjs verify
+          node -e 'const r=require("./phibot-r1j-code-validation.json"); if(r.status!=="BOUNDED_CONTAINER_TESTS_PASS_REVIEW_ONLY" || r.container_test_count!==5 || r.github_writes!==false || r.pr_created!==false || r.merge_authorized!==false || r.reality_gate_granted!==false || r.eligible_for_merge!==false) process.exit(2)'
+
+      - name: Upload review-only metadata, never executable source
+        uses: actions/upload-artifact@v4
+        with:
+          name: phibot-r1j-disposable-code-review-${{ github.run_id }}
+          path: |
+            r1j-container-tests.json
+            phibot-r1j-code-validation.json
+          if-no-files-found: error
+          retention-days: 7
