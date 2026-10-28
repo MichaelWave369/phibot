@@ -51,7 +51,7 @@ function canonicalPayload(encoded) {
 export function fixedPaths(sha) {
   requireCheck(typeof sha === 'string' && PIN.test(sha), 'PIN_FORMAT');
   return Object.freeze({
-    commit: '/repos/MichaelWave369/Agentora/commits/' + sha,
+    commit: '/repos/MichaelWave369/Agentora/git/commits/' + sha,
     contents: '/repos/MichaelWave369/Agentora/contents/'
       + TARGET + '?ref=' + sha,
     branch: '/repos/MichaelWave369/Agentora/branches/main',
@@ -129,8 +129,8 @@ export async function inspectPinnedSource(encoded, { fetchJson = githubGet } = {
   // Strict sequential requests; no unpinned branch-based content downloads.
   const commit = await fetchJson(paths.commit);
   requireCheck(isRecord(commit) && commit.sha === sha
-    && isRecord(commit.commit) && isRecord(commit.commit.tree)
-    && PIN.test(commit.commit.tree.sha), 'COMMIT_NOT_EXACT_PIN');
+    && isRecord(commit.tree)
+    && PIN.test(commit.tree.sha), 'COMMIT_NOT_EXACT_PIN');
 
   const file = await fetchJson(paths.contents);
   requireCheck(isRecord(file) && file.type === 'file' && file.path === TARGET
