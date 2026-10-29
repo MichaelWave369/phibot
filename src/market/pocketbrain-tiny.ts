@@ -2,13 +2,13 @@ import type { MarketObservation } from "./observation.js";
 
 /** Structural subset of the experimental PocketBrain Tiny browser SDK v0.1. */
 export interface TinySdkClient {
-  getStatus(): { ready: boolean; phase: string; model: string | null };
+  getStatus(): { ready: boolean; phase: string; model: string | null; device?: string | null; dtype?: string | null };
   generate(
     prompt: string,
     options: { mode: "baseline"; maxNewTokens: number },
   ): Promise<{
     text: string;
-    receipt: { schema: string; model?: string; backend?: string; mode?: string };
+    receipt: { schema: string; model?: string; backend?: string; dtype?: string; mode?: string };
   }>;
 }
 
@@ -22,6 +22,9 @@ export type TinyAdvisory =
       model: string | null;
       receiptSchema: "POCKETBRAIN_TINY_RUN_V2";
       provenance: "unverified-model-output";
+      sdkReportedBackend: "webgpu" | "wasm" | null;
+      sdkReportedModel: string | null;
+      sdkReportedDtype: string | null;
     }>;
 
 export interface TinyBotSession {
@@ -77,7 +80,8 @@ export class PocketBrainTinyFleet {
       "Reference: " + observation.referencePrice,
       "Move percentage: " + observation.movePct.toFixed(4),
       "Quote time UTC: " + observation.sourceTime,
-      "Respond in at most two short sentences.",
+      "Use only the synthetic 100-to-104 fixture. A strict format checker will hold other text.",
+      "If you can, reply exactly: The synthetic BTC-USD fixture moved from 100 to 104 (+4%). The cause is unknown.",
     ].join("\n");
     try {
       const response = await this.client.generate(prompt, { mode: "baseline", maxNewTokens: 64 });
@@ -95,6 +99,12 @@ export class PocketBrainTinyFleet {
         model: this.client.getStatus().model,
         receiptSchema: "POCKETBRAIN_TINY_RUN_V2" as const,
         provenance: "unverified-model-output" as const,
+        sdkReportedBackend: response.receipt.backend === "webgpu" || response.receipt.backend === "wasm"
+          ? response.receipt.backend : null,
+        sdkReportedModel: typeof response.receipt.model === "string"
+          ? response.receipt.model.slice(0, 120) : null,
+        sdkReportedDtype: typeof response.receipt.dtype === "string"
+          ? response.receipt.dtype.slice(0, 30) : null,
       });
     } catch {
       return Object.freeze({ status: "rejected" as const, botId, reason: "generation-failed" as const });
