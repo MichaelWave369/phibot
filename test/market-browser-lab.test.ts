@@ -89,3 +89,35 @@ test("cannot unload a generating client; serial inference only", async () => {
   await running;
   await lab.unload();
 });
+
+test("R2.1 receipt separates SDK metadata, model generation and deterministic reality classification", async () => {
+  const lab = new BrowserMarketLab();
+  await lab.loadWithConsent(true, async (): Promise<BrowserTinyClient> => ({
+    getStatus: () => ({ ready: true, phase: "ready", model: "known-model", device: "wasm", dtype: "q8" }),
+    load: async () => undefined,
+    generate: async () => ({
+      text: "The price rose due to a surge in demand and slower market activity.",
+      receipt: { schema: "POCKETBRAIN_TINY_RUN_V2", backend: "wasm", model: "known-model", dtype: "q8" },
+    }),
+    dispose: async () => undefined,
+  }), "wasm");
+  const run = await lab.runSyntheticCrew(SDK_URL);
+  assert.equal(run.schema, "phibot.browser-market-lab.v2");
+  assert.equal(run.sdkReportedBackend, "wasm");
+  assert.equal(run.sdkReportedModel, "known-model");
+  assert.equal(run.computeBackendIndependentlyVerified, false);
+  assert.equal(run.restrictedMatchCount, 0);
+  assert.equal(run.realityChecks.length, 2);
+  for (const review of run.realityChecks) {
+    assert.equal(review.sdkReportedBackend, "wasm");
+    assert.equal(review.disposition, "HELD_FOR_HUMAN_REVIEW");
+    assert.ok(review.reasonCodes.includes("UNSUPPORTED_CAUSAL_CLAIM"));
+    assert.match(review.rawText ?? "", /surge in demand/);
+    assert.match(review.fixtureStatement, /Cause unknown/);
+  }
+  assert.equal(run.realPricesChecked, false);
+  assert.equal(run.financialActionsAuthorized, false);
+  const copy = lab.getReports() as unknown as Array<{ realityChecks: Array<{ disposition: string }> }>;
+  copy[0]!.realityChecks[0]!.disposition = "MADE_UP_PASS";
+  assert.equal(lab.getReports()[0]!.realityChecks[0]!.disposition, "HELD_FOR_HUMAN_REVIEW");
+});
