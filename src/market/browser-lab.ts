@@ -1,5 +1,6 @@
 import { assessMarketTick, type MarketObservation } from "./observation.js";
 import { PocketBrainTinyFleet, type TinyAdvisory, type TinySdkClient } from "./pocketbrain-tiny.js";
+import { checkTinyAdvisory, type TinyRealityCheck } from "./reality-check.js";
 
 export type TinyDevice = "auto" | "webgpu" | "wasm";
 export type BrowserLabPhase = "idle" | "loading" | "ready" | "running" | "disposing" | "error";
@@ -10,12 +11,18 @@ export interface BrowserTinyClient extends TinySdkClient {
 }
 
 export interface BrowserLabReport {
-  schema: "phibot.browser-market-lab.v1";
+  schema: "phibot.browser-market-lab.v2";
   fixture: "SYNTHETIC_ONLY";
   runAt: string;
   runId: string;
   observation: Readonly<MarketObservation>;
   sessions: readonly TinyAdvisory[];
+  realityChecks: readonly TinyRealityCheck[];
+  restrictedMatchCount: number;
+  sdkReportedBackend: "webgpu" | "wasm" | null;
+  sdkReportedDtype: string | null;
+  sdkReportedModel: string | null;
+  computeBackendIndependentlyVerified: false;
   sdkUrl: string;
   model: string | null;
   sdkStatus: string;
@@ -41,6 +48,8 @@ export class BrowserMarketLab {
     phase: BrowserLabPhase;
     model: string | null;
     sdkPhase: string | null;
+    sdkReportedBackend: string | null;
+    sdkReportedDtype: string | null;
     reportCount: number;
     error: string | null;
   }> {
@@ -48,6 +57,8 @@ export class BrowserMarketLab {
       phase: this.phase,
       model: this.client?.getStatus().model ?? null,
       sdkPhase: this.client?.getStatus().phase ?? null,
+      sdkReportedBackend: this.client?.getStatus().device ?? null,
+      sdkReportedDtype: this.client?.getStatus().dtype ?? null,
       reportCount: this.reports.length,
       error: this.failure,
     });
@@ -124,13 +135,21 @@ export class BrowserMarketLab {
         this.fleet.forBot("phibot-scout").advise(observation),
         this.fleet.forBot("phibot-skeptic").advise(observation),
       ]);
+      const reviews = sessions.map(advisory => checkTinyAdvisory(advisory, observation));
+      const reported = this.client.getStatus();
       const result: BrowserLabReport = Object.freeze({
-        schema: "phibot.browser-market-lab.v1",
+        schema: "phibot.browser-market-lab.v2",
         fixture: "SYNTHETIC_ONLY",
         runAt: now.toISOString(),
         runId: "market-lab-" + (this.reports.length + 1),
         observation,
         sessions,
+        realityChecks: reviews,
+        restrictedMatchCount: reviews.filter(review => review.disposition === "RESTRICTED_MATCH_REVIEW_ONLY").length,
+        sdkReportedBackend: reported.device === "webgpu" || reported.device === "wasm" ? reported.device : null,
+        sdkReportedDtype: typeof reported.dtype === "string" ? reported.dtype.slice(0, 30) : null,
+        sdkReportedModel: typeof reported.model === "string" ? reported.model.slice(0, 120) : null,
+        computeBackendIndependentlyVerified: false,
         sdkUrl,
         model: this.client.getStatus().model,
         sdkStatus: this.client.getStatus().phase,
