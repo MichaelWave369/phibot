@@ -1,12 +1,13 @@
 import type { MarketObservation } from "./observation.js";
 import { dynamicChallengePrompt, type DynamicChallengeCase } from "./dynamic-challenge.js";
+import { adaptivePrompt, type AdaptiveStrategy } from "./adaptive-challenge.js";
 
 /** Structural subset of the experimental PocketBrain Tiny browser SDK v0.1. */
 export interface TinySdkClient {
   getStatus(): { ready: boolean; phase: string; model: string | null; device?: string | null; dtype?: string | null };
   generate(
     prompt: string,
-    options: { mode: "baseline"; maxNewTokens: number },
+    options: { mode: "baseline" | "guarded"; maxNewTokens: number },
   ): Promise<{
     text: string;
     receipt: { schema: string; model?: string; backend?: string; dtype?: string; mode?: string };
@@ -26,6 +27,7 @@ export type TinyAdvisory =
       sdkReportedBackend: "webgpu" | "wasm" | null;
       sdkReportedModel: string | null;
       sdkReportedDtype: string | null;
+      hostCaptureClipped?: boolean;
     }>;
 
 export interface TinyBotSession {
@@ -33,6 +35,7 @@ export interface TinyBotSession {
   /** Never authorizes an action, mutates the observation, or sends a network request itself. */
   advise(observation: Readonly<MarketObservation>): Promise<TinyAdvisory>;
   challenge(test: DynamicChallengeCase): Promise<TinyAdvisory>;
+  adaptive(test: DynamicChallengeCase, strategy: AdaptiveStrategy): Promise<TinyAdvisory>;
 }
 
 /**
@@ -55,6 +58,8 @@ export class PocketBrainTinyFleet {
         this.enqueue(() => this.advise(botId, observation)),
       challenge: (test: DynamicChallengeCase) =>
         this.enqueue(() => this.challenge(botId, test)),
+      adaptive: (test: DynamicChallengeCase, strategy: AdaptiveStrategy) =>
+        this.enqueue(() => this.adaptive(botId, test, strategy)),
     });
   }
 
@@ -146,6 +151,49 @@ export class PocketBrainTinyFleet {
           ? response.receipt.model.slice(0, 120) : null,
         sdkReportedDtype: typeof response.receipt.dtype === "string"
           ? response.receipt.dtype.slice(0, 30) : null,
+      });
+    } catch {
+      return Object.freeze({ status: "rejected" as const, botId, reason: "generation-failed" as const });
+    }
+  }
+
+  /** At most one generation per caller-invoked strategy; the host enforces the two-attempt cap. */
+  private async adaptive(
+    botId: string, test: DynamicChallengeCase, strategy: AdaptiveStrategy,
+  ): Promise<TinyAdvisory> {
+    if (test.botId !== botId || test.observation.status !== "alert" ||
+        test.observation.provenance !== "source-claimed-unverified" ||
+        !/^SIM-[A-F]$/.test(test.observation.symbol) ||
+        test.observation.sourceUrl !==
+          "https://synthetic.example/fixture/" + test.observation.symbol) {
+      return Object.freeze({ status: "rejected" as const, botId, reason: "invalid-receipt" as const });
+    }
+    if (!this.client.getStatus().ready) {
+      return Object.freeze({ status: "skipped" as const, botId, reason: "not-ready" as const });
+    }
+    try {
+      const mode = strategy === "percent-only-guarded" ? "guarded" as const : "baseline" as const;
+      const raw = await this.client.generate(
+        adaptivePrompt(test, strategy), { mode, maxNewTokens: 48 },
+      );
+      if (raw.receipt?.schema !== "POCKETBRAIN_TINY_RUN_V2" ||
+          typeof raw.text !== "string" || raw.text.trim() === "") {
+        return Object.freeze({ status: "rejected" as const, botId, reason: "invalid-receipt" as const });
+      }
+      return Object.freeze({
+        status: "advisory" as const,
+        botId,
+        text: raw.text.slice(0, 800),
+        hostCaptureClipped: raw.text.length > 800,
+        model: this.client.getStatus().model,
+        receiptSchema: "POCKETBRAIN_TINY_RUN_V2" as const,
+        provenance: "unverified-model-output" as const,
+        sdkReportedBackend: raw.receipt.backend === "webgpu" || raw.receipt.backend === "wasm"
+          ? raw.receipt.backend : null,
+        sdkReportedModel: typeof raw.receipt.model === "string"
+          ? raw.receipt.model.slice(0, 120) : null,
+        sdkReportedDtype: typeof raw.receipt.dtype === "string"
+          ? raw.receipt.dtype.slice(0, 30) : null,
       });
     } catch {
       return Object.freeze({ status: "rejected" as const, botId, reason: "generation-failed" as const });

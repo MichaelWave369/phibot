@@ -17,7 +17,9 @@ test("restored lab does not automatically import a mutable remote PocketBrain SD
   assert.match(html, /id="run-dynamic"/);
   assert.match(app, /crypto\.getRandomValues/);
   assert.match(app, /runDynamicChallenge/);
-  assert.match(app, /phibot\.browser-market-lab-export\.v3/);
+  assert.match(app, /phibot\.browser-market-lab-export\.v4/);
+  assert.match(app, /runAdaptiveChallenge/);
+  assert.match(html, /id="run-adaptive"/);
 });
 
 test("bundled first-party SDK is inert until explicit load", () => {
@@ -39,6 +41,7 @@ test("model loader is shipped only as a separately reviewed public lab", () => {
   assert.match(build, /vendor\/sdk\/v0\.1\/index\.mjs/);
   assert.match(build, /reality-check\.js/);
   assert.match(build, /dynamic-challenge\.js/);
+  assert.match(build, /adaptive-challenge\.js/);
   assert.match(build, /vendor\/pocketbrain-tiny-metrics\.mjs/);
   assert.match(pages, /market:build/);
   assert.match(pages, /site\/dist\/market-lab/);

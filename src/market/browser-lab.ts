@@ -3,6 +3,7 @@ import { PocketBrainTinyFleet, type TinyAdvisory, type TinySdkClient } from "./p
 import { checkTinyAdvisory, type TinyRealityCheck } from "./reality-check.js";
 import { auditNegativeControls, checkDynamicResponse, makeDynamicChallengeCases, scoreDynamicChecks,
   type DynamicChallengeCase, type DynamicChallengeCheck, type ChallengeScores, type NegativeControlAudit } from "./dynamic-challenge.js";
+import { reviewAdaptiveAttempt, type AdaptiveStrategy, type AdaptiveAttemptReview } from "./adaptive-challenge.js";
 
 export type TinyDevice = "auto" | "webgpu" | "wasm";
 export type BrowserLabPhase = "idle" | "loading" | "ready" | "running" | "disposing" | "error";
@@ -59,6 +60,43 @@ export interface DynamicChallengeReport {
   financialActionsAuthorized: false;
 }
 
+export interface AdaptiveChallengeReport {
+  schema: "phibot.browser-adaptive-challenge.v1";
+  fixture: "SEEDED_SYNTHETIC_ONLY";
+  runAt: string;
+  runId: string;
+  seed: number;
+  cases: readonly DynamicChallengeCase[];
+  attempts: readonly Readonly<{
+    caseId: string;
+    strategy: AdaptiveStrategy;
+    response: TinyAdvisory;
+    review: AdaptiveAttemptReview;
+  }>[];
+  metrics: Readonly<{
+    cases: number;
+    generations: number;
+    firstPassMatches: number;
+    fallbackInvocations: number;
+    fallbackRecoveries: number;
+    finalReviewOnlyMatches: number;
+    promptEchoSignals: number;
+    numericalMatches: number;
+    numericalScorable: number;
+    sdkReceipts: number;
+  }>;
+  validatorControls: NegativeControlAudit;
+  sdkReportedBackend: "webgpu" | "wasm" | null;
+  computeBackendIndependentlyVerified: false;
+  generationFinishReasonAvailable: false;
+  actionAuthority: "READ_ONLY_ADVISORY";
+  authority: "READ_ONLY_ADVISORY";
+  realPricesChecked: false;
+  sourceVerified: false;
+  modelOutputTrusted: false;
+  financialActionsAuthorized: false;
+}
+
 /**
  * Experimental browser-only qualification host, not the Node PhiBotRuntime.
  * No storage, fetch, timers, broker tools or ambient model downloads.
@@ -67,7 +105,7 @@ export class BrowserMarketLab {
   private phase: BrowserLabPhase = "idle";
   private client: BrowserTinyClient | null = null;
   private fleet: PocketBrainTinyFleet | null = null;
-  private reports: Array<BrowserLabReport | DynamicChallengeReport> = [];
+  private reports: Array<BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport> = [];
   private failure: string | null = null;
 
   getStatus(): Readonly<{
@@ -91,7 +129,7 @@ export class BrowserMarketLab {
   }
 
   /** A snapshot, never a reference to internal mutable history. */
-  getReports(): readonly (BrowserLabReport | DynamicChallengeReport)[] {
+  getReports(): readonly (BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport)[] {
     return structuredClone(this.reports);
   }
 
@@ -235,6 +273,90 @@ export class BrowserMarketLab {
       });
       this.reports.push(result);
       return structuredClone(result);
+    } finally {
+      this.phase = "ready";
+    }
+  }
+
+  /**
+   * Bounded observational retry: each bot receives one compact-fields attempt.
+   * Only a held response can invoke the guarded percentage-only probe.
+   * Never replace the original response or promote an unscorable guess.
+   */
+  async runAdaptiveChallenge(
+    seed: number, now: Date = new Date(),
+  ): Promise<AdaptiveChallengeReport> {
+    if (this.phase !== "ready" || !this.client?.getStatus().ready || !this.fleet) {
+      throw new Error("Click Load PocketBrain Tiny and complete initialization first.");
+    }
+    const cases = makeDynamicChallengeCases(seed, now);
+    this.phase = "running";
+    try {
+      const attempts: Array<{
+        caseId: string; strategy: AdaptiveStrategy;
+        response: TinyAdvisory; review: AdaptiveAttemptReview;
+      }> = [];
+      let firstPassMatches = 0;
+      let fallbackInvocations = 0;
+      let fallbackRecoveries = 0;
+      let finalReviewOnlyMatches = 0;
+      for (const test of cases) {
+        const firstStrategy = "compact-fields" as const;
+        const first = await this.fleet.forBot(test.botId).adaptive(test, firstStrategy);
+        const firstReview = reviewAdaptiveAttempt(test, firstStrategy, first);
+        attempts.push({ caseId: test.id, strategy: firstStrategy, response: first, review: firstReview });
+        if (firstReview.disposition === "MATCHES_SYNTHETIC_ARITHMETIC_REVIEW_ONLY") {
+          firstPassMatches++;
+          finalReviewOnlyMatches++;
+          continue;
+        }
+        fallbackInvocations++;
+        const fallbackStrategy = "percent-only-guarded" as const;
+        const fallback = await this.fleet.forBot(test.botId).adaptive(test, fallbackStrategy);
+        const fallbackReview = reviewAdaptiveAttempt(test, fallbackStrategy, fallback);
+        attempts.push({
+          caseId: test.id, strategy: fallbackStrategy, response: fallback, review: fallbackReview,
+        });
+        if (fallbackReview.disposition === "MATCHES_SYNTHETIC_ARITHMETIC_REVIEW_ONLY") {
+          fallbackRecoveries++;
+          finalReviewOnlyMatches++;
+        }
+      }
+      const validatorControls = auditNegativeControls(cases);
+      const status = this.client.getStatus();
+      const reviews = attempts.map(item => item.review);
+      const report: AdaptiveChallengeReport = Object.freeze({
+        schema: "phibot.browser-adaptive-challenge.v1" as const,
+        fixture: "SEEDED_SYNTHETIC_ONLY" as const,
+        runAt: now.toISOString(),
+        runId: "adaptive-challenge-" + (this.reports.length + 1),
+        seed, cases, attempts,
+        metrics: Object.freeze({
+          cases: cases.length,
+          generations: attempts.length,
+          firstPassMatches,
+          fallbackInvocations,
+          fallbackRecoveries,
+          finalReviewOnlyMatches,
+          promptEchoSignals: reviews.filter(x =>
+            x.promptEchoSignal === "INPUT_OR_INSTRUCTION_ECHO_DETECTED").length,
+          numericalMatches: reviews.filter(x => x.numericAccuracy === "MATCH").length,
+          numericalScorable: reviews.filter(x => x.numericAccuracy !== "NOT_SCORABLE").length,
+          sdkReceipts: reviews.filter(x => x.sdkReceiptValid).length,
+        }),
+        validatorControls,
+        sdkReportedBackend: status.device === "webgpu" || status.device === "wasm" ? status.device : null,
+        computeBackendIndependentlyVerified: false as const,
+        generationFinishReasonAvailable: false as const,
+        actionAuthority: "READ_ONLY_ADVISORY" as const,
+        authority: "READ_ONLY_ADVISORY" as const,
+        realPricesChecked: false as const,
+        sourceVerified: false as const,
+        modelOutputTrusted: false as const,
+        financialActionsAuthorized: false as const,
+      });
+      this.reports.push(report);
+      return structuredClone(report);
     } finally {
       this.phase = "ready";
     }

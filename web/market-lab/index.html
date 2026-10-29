@@ -47,22 +47,23 @@
       </section>
       <section class="panel" aria-labelledby="run-title">
         <div class="section-num">02 · CREW MISSION</div>
-        <h2 id="run-title">Challenge both PhiBots</h2>
-        <p><strong>R2.2:</strong> Each click creates two different invented price challenges, one per bot, with a locally generated replay seed. No model is given the expected percentage or a completed answer. No quote, forecast or fetched market data is involved.</p>
+        <h2 id="run-title">Adaptive Challenge · R2.3</h2>
+        <p><strong>R2.3:</strong> Each bot gets a short structured prompt on a fresh synthetic fixture. If that fails, it receives one guarded, percentage-only retry. The system retains BOTH replies, records echo signals and does not assume a missing field proves truncation. Invented data only.</p>
         <div class="metric-grid">
           <div class="metric"><span>FIXTURE MOVE</span><strong>+4.00%</strong><small>100 → 104</small></div>
           <div class="metric"><span>ALERT THRESHOLD</span><strong>3.00%</strong><small>Deterministic</small></div>
         </div>
-        <button id="run-dynamic" class="primary stretch" disabled>Run R2.2 seeded dynamic challenge</button>
+        <button id="run-adaptive" class="primary stretch" disabled>Run R2.3 adaptive challenge (up to 4 generations)</button>
+        <button id="run-dynamic" class="secondary stretch" disabled>Run R2.2 long-prompt comparison</button>
         <button id="run" class="secondary stretch" disabled>R2.1 legacy 100 → 104 fixed fixture</button>
         <button id="export" class="secondary stretch" disabled>Export local qualification JSON</button>
-        <p class="fine">Two isolated, stateless bot sessions are queued sequentially on one model. The hidden negative controls test the checker, not the model. SDK receipt, formatting, arithmetic, and claim signals are scored separately. No memory or tool access.</p>
+        <p class="fine">At most two model calls per bot; no silent retries and no extra download. Fallback is only attempted after a held first response. The SDK does not expose a reliable generation finish reason here, so incomplete formatting is NOT called proven truncation. No memory, external data or tool access.</p>
       </section>
     </div>
 
     <section class="panel" aria-labelledby="reports-title">
       <div class="report-heading"><div><div class="section-num">03 · QUALIFICATION EVIDENCE</div><h2 id="reports-title">Reality Check · untrusted model outputs</h2></div><span class="tag">LOCAL IN-MEMORY</span></div>
-      <p class="fine">R2.1 fixed-fixture matching remains available. R2.2 scores different synthetic inputs independently: receipt, strict format, numeric equality and limited unsupported-claim signals. Validator self-tests use hidden, locally corrupted strings. All matches remain review-only; neither scoring nor a green CI run proves factual correctness, reasoning or hardware attestation.</p>
+      <p class="fine">R2.1 fixed-fixture and R2.2 long-prompt comparisons remain available. R2.3 reports every attempt and separates SDK success, format compliance, arithmetic matching, echo signals and unknown generation-end status. Negative controls only test the checker. All matches remain review-only, never a proof of reasoning or authority.</p>
       <p id="message" role="status" aria-live="polite">Nothing has loaded or run.</p>
       <div id="reports" class="reports">
         <div class="empty">Press Load after consenting, then run the synthetic crew.</div>
