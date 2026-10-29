@@ -18,7 +18,7 @@ function message(text) {
 }
 
 function render() {
-  const { phase, model, sdkPhase, reportCount, error } = lab.getStatus();
+  const { phase, model, sdkPhase, sdkReportedBackend, sdkReportedDtype, reportCount, error } = lab.getStatus();
   element("phase").textContent = phase.toUpperCase();
   const pill = element("phase").parentElement;
   pill.className = "status " + phase;
@@ -32,6 +32,8 @@ function render() {
     "WebGPU API present: " + Boolean(navigator.gpu) +
     " · SDK model: " + (model ?? "not loaded") +
     " · SDK phase: " + (sdkPhase ?? "none") +
+    " · SDK-reported backend: " + (sdkReportedBackend ?? "not reported") +
+    " · SDK-reported dtype: " + (sdkReportedDtype ?? "not reported") +
     " · This does not prove model inference.";
   if (error) message("Load error: " + error);
 }
@@ -45,21 +47,29 @@ function appendReport(result) {
   const detail = document.createElement("p");
   detail.textContent = "Synthetic +" + result.observation.movePct.toFixed(2) +
     "% move · " + result.observation.checkedAt + "\n" +
-    "Source: synthetic fixture · independently verified: NO";
+    "Source: synthetic fixture · independently verified: NO" +
+    "\nSDK-reported compute backend: " + (result.sdkReportedBackend ?? "NOT REPORTED") +
+    " · independent attestation: NO" +
+    "\nRestrictive output matches: " + result.restrictedMatchCount + "/2";
   observation.append(summary, detail);
   reportsEl.append(observation);
   for (const session of result.sessions) {
+    const review = result.realityChecks.find(item => item.botId === session.botId);
     const card = document.createElement("div");
     card.className = "bot-report";
     const title = document.createElement("h3");
     title.textContent = session.botId;
     const status = document.createElement("small");
-    status.textContent = "Status: " + session.status +
-      " · Model output: UNVERIFIED / NO ACTION AUTHORITY";
+    status.textContent = "SDK receipt: " + session.status +
+      " · Reality Check: " + (review?.disposition ?? "HELD_FOR_HUMAN_REVIEW") +
+      " · Codes: " + (review?.reasonCodes.join(", ") || "none") +
+      " · Backend (SDK claim): " + (review?.sdkReportedBackend ?? "not reported") +
+      " · NO ACTION AUTHORITY";
     const contents = document.createElement("p");
-    contents.textContent = session.status === "advisory"
-      ? session.text
-      : "No valid advisory: " + ("reason" in session ? session.reason : "unknown");
+    contents.textContent = "FIXTURE-ONLY DETERMINISTIC STATEMENT (not model output):\n" +
+      (review?.fixtureStatement ?? "Unavailable") +
+      "\n\nUNTRUSTED ORIGINAL MODEL OUTPUT (review only; may be false):\n" +
+      (review?.rawText ?? ("No valid advisory: " + ("reason" in session ? session.reason : "unknown")));
     card.append(title, status, contents);
     reportsEl.append(card);
   }
@@ -97,8 +107,9 @@ runButton.addEventListener("click", async () => {
     const result = await task;
     appendReport(result);
     const valid = result.sessions.filter((s) => s.status === "advisory").length;
-    message(valid + "/2 advisory receipts passed the SDK schema check. " +
-      "This is NOT independent model parity, trading permission, or proof of factual analysis.");
+    message(valid + "/2 valid SDK advisory receipts; " + result.restrictedMatchCount +
+      "/2 restrictive text matches. HELD means human review, not a failed model download. " +
+      "Matching is NOT factuality proof, compute attestation, or trade authorization.");
   } catch (error) {
     message("Crew run failed: " + (error instanceof Error ? error.message : String(error)));
   }
@@ -119,7 +130,7 @@ exportButton.addEventListener("click", () => {
   const reports = lab.getReports();
   if (!reports.length) return;
   const evidence = {
-    schema: "phibot.browser-market-lab-export.v1",
+    schema: "phibot.browser-market-lab-export.v2",
     exportTime: new Date().toISOString(),
     hostOrigin: location.origin,
     sdkOrigin: new URL(SDK_URL).origin,
@@ -127,6 +138,10 @@ exportButton.addEventListener("click", () => {
     sdkUrl: SDK_URL,
     sdkVersionClaim: EXPECTED_SDK_VERSION,
     webGpuInterfacePresent: Boolean(navigator.gpu),
+    sdkReportedBackend: lab.getStatus().sdkReportedBackend,
+    sdkReportedDtype: lab.getStatus().sdkReportedDtype,
+    backendIndependentlyVerified: false,
+    realityCheckMeaning: "NARROW_SYNTHETIC_STRING_MATCH_NOT_GENERAL_FACT_CHECK",
     independentParity: "NOT_TESTED",
     sdkSource: "VENDORED_FIRST_PARTY_IN_PHIBOT_COMMIT",
     externalRuntimeAndModelAttestation: "NOT_ATTESTED",
@@ -136,7 +151,7 @@ exportButton.addEventListener("click", () => {
   const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "phibot-17-market-lab-evidence.json";
+  a.download = "phibot-17-r21-reality-check-evidence.json";
   document.body.append(a);
   a.click();
   a.remove();
