@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs && node --test scripts/repo-ci-preflight.test.mjs && node --test scripts/r1h-readonly-inspect.test.mjs && node --test scripts/r1i-pinned-source.test.mjs && node --test scripts/r1j-trial.test.mjs && node --test scripts/market-browser-boundary.test.mjs && node --test scripts/learning-gate.test.mjs",
+    "test": "npm run build && node --test dist/test/*.test.js && node --test scripts/cloud-field-assert.test.mjs && node --test scripts/repo-steward.test.mjs && node --test scripts/repo-steward-verify.test.mjs && node --test scripts/repo-steward-repair.test.mjs && node --test scripts/repo-steward-handoff.test.mjs && node --test scripts/work-queue.test.mjs && node --test scripts/queue-dashboard.test.mjs && node --test scripts/queue-field-qualification.test.mjs && node --test scripts/repo-ci-preflight.test.mjs && node --test scripts/r1h-readonly-inspect.test.mjs && node --test scripts/r1i-pinned-source.test.mjs && node --test scripts/r1j-trial.test.mjs && node --test scripts/market-browser-boundary.test.mjs && node --test scripts/learning-gate.test.mjs && node --test scripts/learning-ci-bridge.test.mjs",
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
@@ -41,7 +41,8 @@
     "learning:capture": "node scripts/learning-gate.mjs capture",
     "learning:list": "node scripts/learning-gate.mjs list",
     "learning:propose": "node scripts/learning-gate.mjs propose",
-    "learning:replay": "node scripts/learning-gate.mjs replay"
+    "learning:replay": "node scripts/learning-gate.mjs replay",
+    "learning:ci": "node scripts/learning-ci-bridge.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
