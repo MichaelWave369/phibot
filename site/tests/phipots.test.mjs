@@ -33,5 +33,5 @@ test("crew design preserves exact human approval and evidence boundaries", async
   assert.match(doc, /UNVERIFIED/);
   assert.match(doc, /no automatic publish\/merge/);
   assert.match(doc, /zero write authority/i);
-  assert.match(doc, /DESIGN \/ PUBLIC SHOWCASE ONLY/);
+  assert.match(doc, /PUBLIC DESIGN SHOWCASE \+ LOCAL DETERMINISTIC REHEARSAL/);
 });
