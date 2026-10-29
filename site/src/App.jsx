@@ -271,6 +271,7 @@ export default function App() {
       <div className="menu-title">CONNECT</div>
       <a className="nav-link external-link" href={GITHUB} target="_blank" rel="noreferrer"><Icon name="github"/><span>GitHub repository</span><Icon name="external" size={13}/></a>
       <a className="nav-link external-link" href={GITHUB+"/blob/main/docs/LOCAL_QUEUE_DASHBOARD.md"} target="_blank" rel="noreferrer"><Icon name="book"/><span>Local setup</span><Icon name="external" size={13}/></a>
+      <a className="nav-link external-link" href="/phibot/market-lab/"><Icon name="cpu"/><span>PocketBrain Tiny Lab (opt-in)</span><Icon name="external" size={13}/></a>
       <div className="sidebar-bottom"><div className="terminal-sign"><span className="terminal-dot"/><div><strong>PUBLIC SHOWCASE</strong><small>Simulated sample data</small></div></div><div className="sidebar-foot">v0.1 · PHI / 369<br/>LEDGER ABOVE EGO</div></div>
     </aside>
     <div className="mobile-top"><button className="brand" onClick={()=>setTab("overview")}><PhiLogo/><span><strong>PHIBOT</strong><small>MISSION CONTROL</small></span></button><span className="demo-tag">DEMO MODE</span></div>
