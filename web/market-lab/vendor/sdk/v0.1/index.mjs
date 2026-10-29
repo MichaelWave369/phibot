@@ -75,6 +75,30 @@ export function createPocketBrainTinyClient({
       return loadPromise;
     },
 
+    /**
+     * Optional source-level tokenizer rendering, only after the user explicitly loaded a model.
+     * Does not generate tokens, fetch a model, or claim equivalence with the final ONNX input.
+     */
+    async inspectPrompt(prompt) {
+      if (phase !== 'ready' || !session) {
+        throw new Error('Model must be loaded before tokenizer inspection.');
+      }
+      if (typeof prompt !== 'string' || !prompt.trim()) {
+        throw new TypeError('Nonempty diagnostic prompt required.');
+      }
+      if (typeof session.inspectPrompt !== 'function') {
+        return {
+          schema: 'phibot.market.template-inspection.v1',
+          status: 'API_UNAVAILABLE', method: 'apply_chat_template',
+          addGenerationPromptRequested: true,
+          inputMessages: 'VENDORED_SYSTEM_PLUS_USER',
+          renderedPreview: null, renderedLength: null, previewClipped: false,
+          exactGeneratorInputTokenSequenceVerified: false, errorClass: null,
+        };
+      }
+      return session.inspectPrompt(prompt);
+    },
+
     /** Runs the actual loaded model, returning its text and honest receipt. */
     async generate(prompt, {
       mode = 'baseline', maxNewTokens = 64, onText,
