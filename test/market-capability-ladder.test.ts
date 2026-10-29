@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { makeDynamicChallengeCases } from "../src/market/dynamic-challenge.js";
-import { CAPABILITY_LEVELS, makeCapabilityProbe, reviewCapabilityProbe, summarizeCapabilityReviews } from "../src/market/capability-ladder.js";
+import { CAPABILITY_LEVELS, makeCapabilityProbe, reviewCapabilityProbe, summarizeCapabilityReviews,
+  type CapabilityProbe, type CapabilityLevel } from "../src/market/capability-ladder.js";
 import type { TinyAdvisory } from "../src/market/pocketbrain-tiny.js";
 
 const date = new Date("2026-10-29T05:31:57.272Z");
@@ -18,7 +19,8 @@ test("three bounded capability levels on each of two deterministic cases", () =>
   assert.deepEqual(cases, makeDynamicChallengeCases(3438471309, date));
   assert.equal(cases.length, 2);
   for (const eachCase of cases) {
-    const probes = CAPABILITY_LEVELS.map(level => makeCapabilityProbe(eachCase, level));
+    const probes: ReadonlyArray<Readonly<CapabilityProbe>> = CAPABILITY_LEVELS.map(
+      (level: CapabilityLevel) => makeCapabilityProbe(eachCase, level));
     assert.equal(new Set(probes.map(x => x.level)).size, 3);
     assert.equal(probes[0]?.expectedValue, probes[0]!.input.left + probes[0]!.input.right);
     assert.equal(probes[1]?.expectedValue, eachCase.observation.movePct);
