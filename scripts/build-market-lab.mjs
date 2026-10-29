@@ -18,6 +18,7 @@ const sources = [
   [join(compiled, "observation.js"), join(out, "market", "observation.js")],
   [join(compiled, "pocketbrain-tiny.js"), join(out, "market", "pocketbrain-tiny.js")],
   [join(compiled, "reality-check.js"), join(out, "market", "reality-check.js")],
+  [join(compiled, "dynamic-challenge.js"), join(out, "market", "dynamic-challenge.js")],
   [join(root, "web/market-lab/vendor/sdk/v0.1/index.mjs"), join(out, "vendor/sdk/v0.1/index.mjs")],
   [join(root, "web/market-lab/vendor/pocketbrain-tiny.mjs"), join(out, "vendor/pocketbrain-tiny.mjs")],
   [join(root, "web/market-lab/vendor/pocketbrain-tiny-metrics.mjs"), join(out, "vendor/pocketbrain-tiny-metrics.mjs")],

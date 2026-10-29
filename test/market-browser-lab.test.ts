@@ -119,5 +119,8 @@ test("R2.1 receipt separates SDK metadata, model generation and deterministic re
   assert.equal(run.financialActionsAuthorized, false);
   const copy = lab.getReports() as unknown as Array<{ realityChecks: Array<{ disposition: string }> }>;
   copy[0]!.realityChecks[0]!.disposition = "MADE_UP_PASS";
-  assert.equal(lab.getReports()[0]!.realityChecks[0]!.disposition, "HELD_FOR_HUMAN_REVIEW");
+  const saved = lab.getReports()[0]!;
+  assert.equal(saved.schema, "phibot.browser-market-lab.v2");
+  if (saved.schema !== "phibot.browser-market-lab.v2") throw new Error("Expected legacy report.");
+  assert.equal(saved.realityChecks[0]!.disposition, "HELD_FOR_HUMAN_REVIEW");
 });
