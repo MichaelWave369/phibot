@@ -42,7 +42,7 @@ test("placeholder echo and copied math input detected even when legacy echo sign
   assert.ok(reviewed.echoSignals.includes("REPEATED_FORMAT_PLACEHOLDERS"));
   assert.equal(reviewed.disposition, "HELD_FOR_HUMAN_REVIEW");
   const addition = probes[0]!;
-  assert.ok(detectIntegrityEcho(addition.prompt, "To Compute 3 + 4. Answer with one integer only.").includes("COPIED_INPUT_PHRASE") === false || true);
+  assert.ok(detectIntegrityEcho(addition.prompt, "Compute 3 + 4").includes("COPIED_INPUT_PHRASE"));
   assert.ok(detectIntegrityEcho(addition.prompt, addition.prompt).includes("EXACT_PROMPT"));
 });
 test("bad or absent receipt never promotes even if model text is exactly correct", () => {
