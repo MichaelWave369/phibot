@@ -1,0 +1,46 @@
+{
+  "schema": "phibot.learning.regression.fixtures.v1",
+  "mode": "METAMORPHIC_SYNTHETIC_NO_FIELD_ATTESTATION",
+  "cases": [
+    {
+      "id": "same-new-run",
+      "scenario": "SAME_SIGNATURE_NEW_RUN",
+      "expected_stop": true
+    },
+    {
+      "id": "same-new-sha",
+      "scenario": "SAME_SIGNATURE_NEW_SHA",
+      "expected_stop": true
+    },
+    {
+      "id": "same-new-evidence",
+      "scenario": "SAME_SIGNATURE_NEW_EVIDENCE",
+      "expected_stop": true
+    },
+    {
+      "id": "other-repository",
+      "scenario": "OTHER_REPOSITORY",
+      "expected_stop": false
+    },
+    {
+      "id": "other-check",
+      "scenario": "OTHER_CHECK",
+      "expected_stop": false
+    },
+    {
+      "id": "other-failure",
+      "scenario": "OTHER_FAILURE_CODE",
+      "expected_stop": false
+    },
+    {
+      "id": "other-layer",
+      "scenario": "OTHER_LAYER",
+      "expected_stop": false
+    },
+    {
+      "id": "other-task",
+      "scenario": "OTHER_TASK_KIND",
+      "expected_stop": false
+    }
+  ]
+}
