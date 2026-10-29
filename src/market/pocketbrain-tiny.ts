@@ -1,4 +1,5 @@
 import type { MarketObservation } from "./observation.js";
+import { dynamicChallengePrompt, type DynamicChallengeCase } from "./dynamic-challenge.js";
 
 /** Structural subset of the experimental PocketBrain Tiny browser SDK v0.1. */
 export interface TinySdkClient {
@@ -31,6 +32,7 @@ export interface TinyBotSession {
   readonly botId: string;
   /** Never authorizes an action, mutates the observation, or sends a network request itself. */
   advise(observation: Readonly<MarketObservation>): Promise<TinyAdvisory>;
+  challenge(test: DynamicChallengeCase): Promise<TinyAdvisory>;
 }
 
 /**
@@ -51,6 +53,8 @@ export class PocketBrainTinyFleet {
       botId,
       advise: (observation: Readonly<MarketObservation>) =>
         this.enqueue(() => this.advise(botId, observation)),
+      challenge: (test: DynamicChallengeCase) =>
+        this.enqueue(() => this.challenge(botId, test)),
     });
   }
 
@@ -110,4 +114,42 @@ export class PocketBrainTinyFleet {
       return Object.freeze({ status: "rejected" as const, botId, reason: "generation-failed" as const });
     }
   }
+  /** Distinct seeded synthetic cases, no example response or expected move in prompt. */
+  private async challenge(botId: string, test: DynamicChallengeCase): Promise<TinyAdvisory> {
+    if (test.botId !== botId || test.observation.status !== "alert" ||
+        test.observation.provenance !== "source-claimed-unverified" ||
+        !/^SIM-[A-F]$/.test(test.observation.symbol) ||
+        !test.observation.sourceUrl.startsWith("https://synthetic.example/fixture/")) {
+      return Object.freeze({ status: "rejected" as const, botId, reason: "invalid-receipt" as const });
+    }
+    if (!this.client.getStatus().ready) {
+      return Object.freeze({ status: "skipped" as const, botId, reason: "not-ready" as const });
+    }
+    try {
+      const response = await this.client.generate(
+        dynamicChallengePrompt(test), { mode: "baseline", maxNewTokens: 96 },
+      );
+      if (response.receipt?.schema !== "POCKETBRAIN_TINY_RUN_V2" ||
+          typeof response.text !== "string" || response.text.trim() === "") {
+        return Object.freeze({ status: "rejected" as const, botId, reason: "invalid-receipt" as const });
+      }
+      return Object.freeze({
+        status: "advisory" as const,
+        botId,
+        text: response.text.slice(0, 800),
+        model: this.client.getStatus().model,
+        receiptSchema: "POCKETBRAIN_TINY_RUN_V2" as const,
+        provenance: "unverified-model-output" as const,
+        sdkReportedBackend: response.receipt.backend === "webgpu" || response.receipt.backend === "wasm"
+          ? response.receipt.backend : null,
+        sdkReportedModel: typeof response.receipt.model === "string"
+          ? response.receipt.model.slice(0, 120) : null,
+        sdkReportedDtype: typeof response.receipt.dtype === "string"
+          ? response.receipt.dtype.slice(0, 30) : null,
+      });
+    } catch {
+      return Object.freeze({ status: "rejected" as const, botId, reason: "generation-failed" as const });
+    }
+  }
+
 }
