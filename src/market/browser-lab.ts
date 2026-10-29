@@ -4,6 +4,8 @@ import { checkTinyAdvisory, type TinyRealityCheck } from "./reality-check.js";
 import { auditNegativeControls, checkDynamicResponse, makeDynamicChallengeCases, scoreDynamicChecks,
   type DynamicChallengeCase, type DynamicChallengeCheck, type ChallengeScores, type NegativeControlAudit } from "./dynamic-challenge.js";
 import { reviewAdaptiveAttempt, type AdaptiveStrategy, type AdaptiveAttemptReview } from "./adaptive-challenge.js";
+import { CAPABILITY_LEVELS, makeCapabilityProbe, reviewCapabilityProbe, summarizeCapabilityReviews,
+  type CapabilityProbe, type CapabilityReview } from "./capability-ladder.js";
 
 export type TinyDevice = "auto" | "webgpu" | "wasm";
 export type BrowserLabPhase = "idle" | "loading" | "ready" | "running" | "disposing" | "error";
@@ -97,6 +99,28 @@ export interface AdaptiveChallengeReport {
   financialActionsAuthorized: false;
 }
 
+export interface CapabilityLadderReport {
+  schema: "phibot.browser-capability-ladder.v1";
+  fixture: "SEEDED_SYNTHETIC_ONLY";
+  runId: string;
+  runAt: string;
+  seed: number;
+  cases: readonly DynamicChallengeCase[];
+  attempts: readonly Readonly<{ probe: CapabilityProbe; response: TinyAdvisory; review: CapabilityReview }>[];
+  byLevel: Readonly<ReturnType<typeof summarizeCapabilityReviews>>;
+  sdkPromptEnvelope: "VENDORED_SYSTEM_PLUS_USER_MESSAGES";
+  sdkRenderedChatTemplateIndependentlyInspected: false;
+  repeatability: "REPLAY_SAME_SEED_MANUALLY";
+  sdkReportedBackend: "webgpu" | "wasm" | null;
+  sdkReportedModel: string | null;
+  computeBackendIndependentlyVerified: false;
+  authority: "READ_ONLY_ADVISORY";
+  realPricesChecked: false;
+  sourceVerified: false;
+  modelOutputTrusted: false;
+  financialActionsAuthorized: false;
+}
+
 /**
  * Experimental browser-only qualification host, not the Node PhiBotRuntime.
  * No storage, fetch, timers, broker tools or ambient model downloads.
@@ -105,7 +129,7 @@ export class BrowserMarketLab {
   private phase: BrowserLabPhase = "idle";
   private client: BrowserTinyClient | null = null;
   private fleet: PocketBrainTinyFleet | null = null;
-  private reports: Array<BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport> = [];
+  private reports: Array<BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport> = [];
   private failure: string | null = null;
 
   getStatus(): Readonly<{
@@ -129,7 +153,7 @@ export class BrowserMarketLab {
   }
 
   /** A snapshot, never a reference to internal mutable history. */
-  getReports(): readonly (BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport)[] {
+  getReports(): readonly (BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport)[] {
     return structuredClone(this.reports);
   }
 
@@ -357,6 +381,49 @@ export class BrowserMarketLab {
       });
       this.reports.push(report);
       return structuredClone(report);
+    } finally {
+      this.phase = "ready";
+    }
+  }
+
+  /** Exactly six sequential probes: two synthetic cases at each of three levels. */
+  async runCapabilityLadder(seed: number, now: Date = new Date()): Promise<CapabilityLadderReport> {
+    if (this.phase !== "ready" || !this.client?.getStatus().ready || !this.fleet) {
+      throw new Error("Click Load PocketBrain Tiny and complete initialization first.");
+    }
+    const cases = makeDynamicChallengeCases(seed, now);
+    this.phase = "running";
+    try {
+      const attempts: Array<{ probe: CapabilityProbe; response: TinyAdvisory; review: CapabilityReview }> = [];
+      for (const level of CAPABILITY_LEVELS) {
+        for (const test of cases) {
+          const probe = makeCapabilityProbe(test, level);
+          const response = await this.fleet.forBot(test.botId).capability(probe);
+          const review = reviewCapabilityProbe(probe, response);
+          attempts.push({ probe, response, review });
+        }
+      }
+      const reported = this.client.getStatus();
+      const result: CapabilityLadderReport = Object.freeze({
+        schema: "phibot.browser-capability-ladder.v1" as const,
+        fixture: "SEEDED_SYNTHETIC_ONLY" as const,
+        runId: "capability-ladder-" + (this.reports.length + 1),
+        runAt: now.toISOString(), seed, cases, attempts,
+        byLevel: summarizeCapabilityReviews(attempts.map(x => x.review)),
+        sdkPromptEnvelope: "VENDORED_SYSTEM_PLUS_USER_MESSAGES" as const,
+        sdkRenderedChatTemplateIndependentlyInspected: false as const,
+        repeatability: "REPLAY_SAME_SEED_MANUALLY" as const,
+        sdkReportedBackend: reported.device === "webgpu" || reported.device === "wasm" ? reported.device : null,
+        sdkReportedModel: typeof reported.model === "string" ? reported.model.slice(0, 120) : null,
+        computeBackendIndependentlyVerified: false as const,
+        authority: "READ_ONLY_ADVISORY" as const,
+        realPricesChecked: false as const,
+        sourceVerified: false as const,
+        modelOutputTrusted: false as const,
+        financialActionsAuthorized: false as const,
+      });
+      this.reports.push(result);
+      return structuredClone(result);
     } finally {
       this.phase = "ready";
     }
