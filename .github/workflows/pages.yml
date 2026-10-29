@@ -13,6 +13,8 @@ on:
       - "test/market-dynamic-browser-lab.test.ts"
       - "test/market-adaptive-challenge.test.ts"
       - "test/market-adaptive-browser-lab.test.ts"
+      - "test/market-capability-ladder.test.ts"
+      - "test/market-capability-browser-lab.test.ts"
       - "scripts/market-browser-boundary.test.mjs"
       - ".github/workflows/pages.yml"
   push:
@@ -28,6 +30,8 @@ on:
       - "test/market-dynamic-browser-lab.test.ts"
       - "test/market-adaptive-challenge.test.ts"
       - "test/market-adaptive-browser-lab.test.ts"
+      - "test/market-capability-ladder.test.ts"
+      - "test/market-capability-browser-lab.test.ts"
       - "scripts/market-browser-boundary.test.mjs"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
