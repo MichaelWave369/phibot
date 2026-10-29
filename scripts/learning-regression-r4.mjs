@@ -127,7 +127,7 @@ export function validateFixtures(fixture) {
 }
 function different(value, alternative) {
   if (value !== alternative) return alternative;
-  return alternative === "c".repeat(40) ? "d".repeat(40) : "c".repeat(40);
+  return (alternative[0] === "c" ? "d" : "c").repeat(alternative.length);
 }
 export function makeSyntheticObservation(baseline, scenario, index) {
   const o = { ...validateObservation(baseline) };
