@@ -124,3 +124,7 @@ After completing a real read-only job through the local Mission Control, run `np
 ### PHIBOT-30: Learning Gate R1 failure capsules and advisory replay
 
 Learning Gate R1 adds an operator-triggered, **local-only** failure-observation protocol: immutable metadata-only capsules, deterministic recurrence signatures, review-only lesson proposals requiring at least two distinct *caller-claimed* run IDs, and a simulated replay of the sole `STOP_RETRY_ADVISORY` effect. Run `npm run learning:list` or see [the Learning Gate R1 guide](docs/LEARNING_GATE_R1.md). Nothing is hooked to the main queue yet; no live retry enforcement, independent source attestation, automatic policy promotion, GitHub write, model execution, or merge is authorized. The new negative-control tests run in `npm test`.
+
+### PHIBOT-31: Learning Gate R2 live CI read bridge
+
+The operator-invoked `npm run learning:ci` command can preview (default) or explicitly locally capture one **GitHub-read, SHA-pinned, failed CI check** on a still-authorized PhiBot draft PR. It rechecks PR identity and failed check evidence, requires a scoped repository allowlist, and makes **GitHub GET requests only**. Local capture produces the same **R1 LOCAL_SELF_REPORT** capsule class, not a trusted/attested policy authority. No queue automation, CI retry, write grant, merge, policy promotion, or automatic enforcement. See [R2 CI bridge guide](docs/LEARNING_GATE_R2_CI_BRIDGE.md).
