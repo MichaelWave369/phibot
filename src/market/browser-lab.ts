@@ -90,6 +90,7 @@ export interface AdaptiveChallengeReport {
   computeBackendIndependentlyVerified: false;
   generationFinishReasonAvailable: false;
   actionAuthority: "READ_ONLY_ADVISORY";
+  authority: "READ_ONLY_ADVISORY";
   realPricesChecked: false;
   sourceVerified: false;
   modelOutputTrusted: false;
@@ -348,6 +349,7 @@ export class BrowserMarketLab {
         computeBackendIndependentlyVerified: false as const,
         generationFinishReasonAvailable: false as const,
         actionAuthority: "READ_ONLY_ADVISORY" as const,
+        authority: "READ_ONLY_ADVISORY" as const,
         realPricesChecked: false as const,
         sourceVerified: false as const,
         modelOutputTrusted: false as const,
