@@ -1,6 +1,8 @@
 import { assessMarketTick, type MarketObservation } from "./observation.js";
 import { PocketBrainTinyFleet, type TinyAdvisory, type TinySdkClient } from "./pocketbrain-tiny.js";
 import { checkTinyAdvisory, type TinyRealityCheck } from "./reality-check.js";
+import { auditNegativeControls, checkDynamicResponse, makeDynamicChallengeCases, scoreDynamicChecks,
+  type DynamicChallengeCase, type DynamicChallengeCheck, type ChallengeScores, type NegativeControlAudit } from "./dynamic-challenge.js";
 
 export type TinyDevice = "auto" | "webgpu" | "wasm";
 export type BrowserLabPhase = "idle" | "loading" | "ready" | "running" | "disposing" | "error";
@@ -33,6 +35,30 @@ export interface BrowserLabReport {
   financialActionsAuthorized: false;
 }
 
+export interface DynamicChallengeReport {
+  schema: "phibot.browser-dynamic-challenge.v1";
+  fixture: "SEEDED_SYNTHETIC_ONLY";
+  runAt: string;
+  runId: string;
+  seed: number;
+  cases: readonly DynamicChallengeCase[];
+  sessions: readonly TinyAdvisory[];
+  checks: readonly DynamicChallengeCheck[];
+  scores: Readonly<ChallengeScores>;
+  negativeControls: Readonly<NegativeControlAudit>;
+  validatorSelfTestPassed: boolean;
+  sdkReportedBackend: "webgpu" | "wasm" | null;
+  sdkReportedDtype: string | null;
+  sdkReportedModel: string | null;
+  computeBackendIndependentlyVerified: false;
+  sdkUrl: string;
+  authority: "READ_ONLY_ADVISORY";
+  realPricesChecked: false;
+  sourceVerified: false;
+  modelOutputTrusted: false;
+  financialActionsAuthorized: false;
+}
+
 /**
  * Experimental browser-only qualification host, not the Node PhiBotRuntime.
  * No storage, fetch, timers, broker tools or ambient model downloads.
@@ -41,7 +67,7 @@ export class BrowserMarketLab {
   private phase: BrowserLabPhase = "idle";
   private client: BrowserTinyClient | null = null;
   private fleet: PocketBrainTinyFleet | null = null;
-  private reports: BrowserLabReport[] = [];
+  private reports: Array<BrowserLabReport | DynamicChallengeReport> = [];
   private failure: string | null = null;
 
   getStatus(): Readonly<{
@@ -65,7 +91,7 @@ export class BrowserMarketLab {
   }
 
   /** A snapshot, never a reference to internal mutable history. */
-  getReports(): readonly BrowserLabReport[] {
+  getReports(): readonly (BrowserLabReport | DynamicChallengeReport)[] {
     return structuredClone(this.reports);
   }
 
@@ -153,6 +179,54 @@ export class BrowserMarketLab {
         sdkUrl,
         model: this.client.getStatus().model,
         sdkStatus: this.client.getStatus().phase,
+        authority: "READ_ONLY_ADVISORY",
+        realPricesChecked: false,
+        sourceVerified: false,
+        modelOutputTrusted: false,
+        financialActionsAuthorized: false,
+      });
+      this.reports.push(result);
+      return structuredClone(result);
+    } finally {
+      this.phase = "ready";
+    }
+  }
+
+  /** New diagnostic challenge: no model call unless loaded by human consent. */
+  async runDynamicChallenge(
+    sdkUrl: string, seed: number, now: Date = new Date(),
+  ): Promise<DynamicChallengeReport> {
+    if (this.phase !== "ready" || !this.client?.getStatus().ready || !this.fleet) {
+      throw new Error("Click Load PocketBrain Tiny and complete initialization first.");
+    }
+    // Generate and validate before marking busy; invalid input cannot poison the host phase.
+    const cases = makeDynamicChallengeCases(seed, now);
+    this.phase = "running";
+    try {
+      const sessions = await Promise.all(cases.map(test =>
+        this.fleet!.forBot(test.botId).challenge(test),
+      ));
+      const checks = cases.map((test, i) => checkDynamicResponse(test, sessions[i]!));
+      // These are local, deliberately corrupted strings NEVER presented to PocketBrain.
+      const negativeControls = auditNegativeControls(cases);
+      const status = this.client.getStatus();
+      const result: DynamicChallengeReport = Object.freeze({
+        schema: "phibot.browser-dynamic-challenge.v1",
+        fixture: "SEEDED_SYNTHETIC_ONLY",
+        runAt: now.toISOString(),
+        runId: "dynamic-challenge-" + (this.reports.length + 1),
+        seed,
+        cases,
+        sessions,
+        checks,
+        scores: scoreDynamicChecks(checks),
+        negativeControls,
+        validatorSelfTestPassed: negativeControls.total > 0 && negativeControls.falseAcceptances === 0,
+        sdkReportedBackend: status.device === "webgpu" || status.device === "wasm" ? status.device : null,
+        sdkReportedDtype: typeof status.dtype === "string" ? status.dtype.slice(0, 30) : null,
+        sdkReportedModel: typeof status.model === "string" ? status.model.slice(0, 120) : null,
+        computeBackendIndependentlyVerified: false,
+        sdkUrl,
         authority: "READ_ONLY_ADVISORY",
         realPricesChecked: false,
         sourceVerified: false,
