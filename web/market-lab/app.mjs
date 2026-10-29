@@ -10,6 +10,7 @@ const loadButton = element("load");
 const unloadButton = element("unload");
 const runButton = element("run");
 const dynamicButton = element("run-dynamic");
+const adaptiveButton = element("run-adaptive");
 const exportButton = element("export");
 const reportsEl = element("reports");
 const messageEl = element("message");
@@ -27,6 +28,7 @@ function render() {
   unloadButton.disabled = !["ready", "error"].includes(phase);
   runButton.disabled = phase !== "ready";
   dynamicButton.disabled = phase !== "ready";
+  adaptiveButton.disabled = phase !== "ready";
   exportButton.disabled = reportCount === 0;
   consent.disabled = !["idle", "error"].includes(phase);
   backend.disabled = !["idle", "error"].includes(phase);
@@ -134,6 +136,61 @@ function appendDynamicReport(result) {
   reportsEl.append(audit);
 }
 
+function appendAdaptiveReport(result) {
+  reportsEl.replaceChildren();
+  const overview = document.createElement("div");
+  overview.className = "bot-report";
+  const title = document.createElement("h3");
+  title.textContent = "R2.3 Adaptive · " + result.runId + " · seed " + result.seed;
+  const metrics = document.createElement("p");
+  const m = result.metrics;
+  metrics.textContent =
+    "Model generations: " + m.generations + "/4 maximum" +
+    "\nSDK receipts: " + m.sdkReceipts + "/" + m.generations +
+    "\nFirst-stage full-field matches: " + m.firstPassMatches + "/" + m.cases +
+    "\nGuarded percent-only retries: " + m.fallbackInvocations +
+    "; recoveries: " + m.fallbackRecoveries +
+    "\nCase-level review-only arithmetic matches: " + m.finalReviewOnlyMatches + "/" + m.cases +
+    "\nAttempt-level numeric matches/scorable: " +
+    m.numericalMatches + "/" + m.numericalScorable +
+    "\nPrompt echo signals: " + m.promptEchoSignals +
+    "\nValidator controls held: " + result.validatorControls.correctlyHeld +
+    "/" + result.validatorControls.total +
+    "\nSDK-reported backend: " + (result.sdkReportedBackend ?? "not reported") +
+    " · independently attested: NO" +
+    "\nSDK generation-end reason available: NO";
+  overview.append(title, metrics);
+  reportsEl.append(overview);
+  for (const test of result.cases) {
+    for (const entry of result.attempts.filter(x => x.caseId === test.id)) {
+      const review = entry.review;
+      const card = document.createElement("div");
+      card.className = "bot-report";
+      const heading = document.createElement("h3");
+      heading.textContent = test.botId + " · " + entry.strategy;
+      const details = document.createElement("small");
+      details.textContent =
+        test.observation.symbol + ": " + test.observation.referencePrice +
+        " → " + test.observation.price +
+        " · expected " + review.expectedMovePct + "%" +
+        "\nSDK receipt: " + review.sdkReceiptValid +
+        " · format: " + review.formatMatch +
+        " · numerical: " + review.numericAccuracy +
+        "\nEcho signal: " + review.promptEchoSignal +
+        " · output shape: " + review.outputShape +
+        " · generation finish reason: " + review.generationEndReason +
+        "\nReview: " + review.disposition +
+        " · reasons: " + (review.reasonCodes.join(", ") || "none");
+      const raw = document.createElement("p");
+      raw.textContent = "UNTRUSTED RAW MODEL TEXT:\n" +
+        (review.rawText ?? "(no valid response)") +
+        "\n\nA malformed answer is not proof the generation was truncated.";
+      card.append(heading, details, raw);
+      reportsEl.append(card);
+    }
+  }
+}
+
 consent.addEventListener("change", render);
 loadButton.addEventListener("click", async () => {
   if (!consent.checked) return;
@@ -200,6 +257,28 @@ dynamicButton.addEventListener("click", async () => {
   render();
 });
 
+adaptiveButton.addEventListener("click", async () => {
+  if (!globalThis.crypto?.getRandomValues) {
+    message("Secure challenge seed generator unavailable. Adaptive run not started.");
+    return;
+  }
+  const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+  message("Running bounded R2.3 short prompts; guarded fallback only for held first attempts…");
+  try {
+    const task = lab.runAdaptiveChallenge(seed);
+    render();
+    const result = await task;
+    appendAdaptiveReport(result);
+    message("R2.3 " + result.metrics.finalReviewOnlyMatches + "/2 case matches; " +
+      result.metrics.fallbackInvocations + " guarded retries, " +
+      result.metrics.promptEchoSignals + " echo signals. " +
+      "Original responses preserved; independent verification NOT claimed.");
+  } catch (error) {
+    message("Adaptive challenge failed: " + (error instanceof Error ? error.message : String(error)));
+  }
+  render();
+});
+
 unloadButton.addEventListener("click", async () => {
   try {
     await lab.unload();
@@ -214,7 +293,7 @@ exportButton.addEventListener("click", () => {
   const reports = lab.getReports();
   if (!reports.length) return;
   const evidence = {
-    schema: "phibot.browser-market-lab-export.v3",
+    schema: "phibot.browser-market-lab-export.v4",
     exportTime: new Date().toISOString(),
     hostOrigin: location.origin,
     sdkOrigin: new URL(SDK_URL).origin,
@@ -225,7 +304,7 @@ exportButton.addEventListener("click", () => {
     sdkReportedBackend: lab.getStatus().sdkReportedBackend,
     sdkReportedDtype: lab.getStatus().sdkReportedDtype,
     backendIndependentlyVerified: false,
-    realityCheckMeaning: "R21_FIXED_ALLOWLIST_AND_R22_SEEDED_STRICT_FIELDS_REVIEW_ONLY",
+    realityCheckMeaning: "R21_FIXED_R22_DYNAMIC_R23_BOUNDED_ADAPTIVE_DIAGNOSTIC_ONLY",
     independentParity: "NOT_TESTED",
     sdkSource: "VENDORED_FIRST_PARTY_IN_PHIBOT_COMMIT",
     externalRuntimeAndModelAttestation: "NOT_ATTESTED",
@@ -235,7 +314,7 @@ exportButton.addEventListener("click", () => {
   const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "phibot-17-r22-dynamic-challenge-evidence.json";
+  a.download = "phibot-17-r23-adaptive-challenge-evidence.json";
   document.body.append(a);
   a.click();
   a.remove();
