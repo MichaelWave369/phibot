@@ -11,6 +11,8 @@ const unloadButton = element("unload");
 const runButton = element("run");
 const dynamicButton = element("run-dynamic");
 const adaptiveButton = element("run-adaptive");
+const ladderButton = element("run-ladder");
+const ladderSeed = element("ladder-seed");
 const exportButton = element("export");
 const reportsEl = element("reports");
 const messageEl = element("message");
@@ -29,6 +31,8 @@ function render() {
   runButton.disabled = phase !== "ready";
   dynamicButton.disabled = phase !== "ready";
   adaptiveButton.disabled = phase !== "ready";
+  ladderButton.disabled = phase !== "ready";
+  ladderSeed.disabled = phase !== "ready" && phase !== "idle" && phase !== "error";
   exportButton.disabled = reportCount === 0;
   consent.disabled = !["idle", "error"].includes(phase);
   backend.disabled = !["idle", "error"].includes(phase);
@@ -191,6 +195,47 @@ function appendAdaptiveReport(result) {
   }
 }
 
+function appendLadderReport(result) {
+  reportsEl.replaceChildren();
+  const overview = document.createElement("div");
+  overview.className = "bot-report";
+  const heading = document.createElement("h3");
+  heading.textContent = "R2.4 Capability Ladder · " + result.runId + " · seed " + result.seed;
+  const summary = document.createElement("p");
+  summary.textContent = result.byLevel.map(level =>
+    level.level + ": receipts " + level.receipts + "/" + level.total +
+    ", formatted " + level.formatMatches + "/" + level.total +
+    ", numeric " + level.numericalMatches + "/" + level.numericalScorable +
+    " scorable, review-only matches " + level.reviewOnlyMatches + "/" + level.total
+  ).join("\n") +
+    "\nSDK-reported backend: " + (result.sdkReportedBackend ?? "not reported") +
+    "\nSDK message envelope: system + user (source-inspected, rendered chat template NOT independently inspected)" +
+    "\nIndependent model or hardware attestation: NO. No financial actions.";
+  overview.append(heading, summary);
+  reportsEl.append(overview);
+  for (const { probe, review } of result.attempts) {
+    const card = document.createElement("div");
+    card.className = "bot-report";
+    const title = document.createElement("h3");
+    title.textContent = review.botId + " · " + review.level;
+    const details = document.createElement("small");
+    details.textContent =
+      "SDK receipt: " + review.sdkReceiptValid +
+      " · format: " + review.formatCompliant +
+      " · arithmetic: " + review.numericAccuracy +
+      " · echo signal: " + review.promptEchoSignal +
+      "\nVerdict: " + review.disposition +
+      " · reasons: " + (review.reasonCodes.join(", ") || "none") +
+      " · finish reason: " + review.generationFinishReason;
+    const raw = document.createElement("p");
+    raw.textContent = "INPUT PROMPT (not a completed answer):\n" + probe.prompt +
+      "\n\nUNTRUSTED ORIGINAL MODEL TEXT:\n" + (review.rawText ?? "(no valid response)") +
+      "\n\nHOST-CALCULATED EXPECTED TEXT (not sent to model):\n" + review.expectedText;
+    card.append(title, details, raw);
+    reportsEl.append(card);
+  }
+}
+
 consent.addEventListener("change", render);
 loadButton.addEventListener("click", async () => {
   if (!consent.checked) return;
@@ -279,6 +324,34 @@ adaptiveButton.addEventListener("click", async () => {
   render();
 });
 
+ladderButton.addEventListener("click", async () => {
+  const entered = ladderSeed.value.trim();
+  if (entered === "" && !globalThis.crypto?.getRandomValues) {
+    message("Secure random seed generator unavailable. Cannot start fresh ladder.");
+    return;
+  }
+  const seed = entered === "" ? crypto.getRandomValues(new Uint32Array(1))[0] : Number(entered);
+  if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) {
+    message("Replay seed must be an integer from 0 to 4294967295.");
+    return;
+  }
+  message("Running six sequential synthetic capability probes with deterministic host grading…");
+  try {
+    const task = lab.runCapabilityLadder(seed);
+    render();
+    const result = await task;
+    ladderSeed.value = String(seed); // Next click replays the same seed; clear for fresh input.
+    appendLadderReport(result);
+    message("R2.4: " + result.byLevel.map(level =>
+      level.level + " " + level.numericalMatches + "/" + level.numericalScorable +
+      " scorable").join(" · ") +
+      ". Replay seed " + result.seed + ". Results are review-only, not independently attested.");
+  } catch (error) {
+    message("Capability ladder failed: " + (error instanceof Error ? error.message : String(error)));
+  }
+  render();
+});
+
 unloadButton.addEventListener("click", async () => {
   try {
     await lab.unload();
@@ -293,7 +366,7 @@ exportButton.addEventListener("click", () => {
   const reports = lab.getReports();
   if (!reports.length) return;
   const evidence = {
-    schema: "phibot.browser-market-lab-export.v4",
+    schema: "phibot.browser-market-lab-export.v5",
     exportTime: new Date().toISOString(),
     hostOrigin: location.origin,
     sdkOrigin: new URL(SDK_URL).origin,
@@ -304,7 +377,7 @@ exportButton.addEventListener("click", () => {
     sdkReportedBackend: lab.getStatus().sdkReportedBackend,
     sdkReportedDtype: lab.getStatus().sdkReportedDtype,
     backendIndependentlyVerified: false,
-    realityCheckMeaning: "R21_FIXED_R22_DYNAMIC_R23_BOUNDED_ADAPTIVE_DIAGNOSTIC_ONLY",
+    realityCheckMeaning: "R21_FIXED_R22_DYNAMIC_R23_ADAPTIVE_R24_CAPABILITY_LADDER_REVIEW_ONLY",
     independentParity: "NOT_TESTED",
     sdkSource: "VENDORED_FIRST_PARTY_IN_PHIBOT_COMMIT",
     externalRuntimeAndModelAttestation: "NOT_ATTESTED",
@@ -314,7 +387,7 @@ exportButton.addEventListener("click", () => {
   const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "phibot-17-r23-adaptive-challenge-evidence.json";
+  a.download = "phibot-17-r24-capability-ladder-evidence.json";
   document.body.append(a);
   a.click();
   a.remove();
