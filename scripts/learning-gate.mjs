@@ -43,7 +43,12 @@ function matches(value, pattern, code) {
 export function validateObservation(input) {
   keys(input, OBS_KEYS, "LG_OBSERVATION_KEYS_INVALID");
   const obs = {
-    repo: matches(input.repo, REPO, "LG_REPO_INVALID"),
+    repo: (() => {
+      const name = matches(input.repo, REPO, "LG_REPO_INVALID");
+      if (name.split("/").some(part => part === "." || part === ".."))
+        throw new Error("LG_REPO_INVALID");
+      return name;
+    })(),
     run_id: matches(input.run_id, IDENT, "LG_RUN_ID_INVALID"),
     source_sha: matches(input.source_sha, SHA, "LG_SOURCE_SHA_INVALID"),
     layer: input.layer,
