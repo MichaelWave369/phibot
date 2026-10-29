@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>PhiBot × PocketBrain Tiny | Market Lab</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="eyebrow">PHIBOT-17 / EXPERIMENTAL BROWSER QUALIFICATION</div>
+      <div class="heading">
+        <div>
+          <h1>PhiBot <span>×</span> PocketBrain Tiny</h1>
+          <p>Two research agents. One local model. Zero trading permissions.</p>
+        </div>
+        <div class="status"><span id="status-dot"></span><span id="phase" aria-live="polite">IDLE</span></div>
+      </div>
+    </header>
+
+    <section class="notice" aria-label="Important limitations">
+      <strong>SYNTHETIC FIXTURE ONLY</strong>
+      <p>No real prices, market feeds, trades, investment guidance, cloud agents, persistence, or background jobs.
+      This page tests a real PocketBrain Tiny model after your explicit permission. Model output is unverified, never actionable.</p>
+    </section>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="load-title">
+        <div class="section-num">01 · MODEL LOADER</div>
+        <h2 id="load-title">Give the crew a brain</h2>
+        <p>The initial page load runs no AI. Clicking Load loads a bundled copy of our PocketBrain SDK; external Transformers.js runtime comes from jsDelivr and model/tokenizer data from Hugging Face. A first load can exceed 100 MB.</p>
+        <div class="field">
+          <label for="backend">Preferred compute backend</label>
+          <select id="backend">
+            <option value="auto" selected>Auto · prefer supported local acceleration</option>
+            <option value="webgpu">WebGPU</option>
+            <option value="wasm">WASM · CPU compatibility test</option>
+          </select>
+        </div>
+        <label class="consent"><input id="consent" type="checkbox" /><span>I authorize the external SDK, runtime and model downloads for this test.</span></label>
+        <div class="buttons"><button id="load" class="primary">Load PocketBrain Tiny</button><button id="unload" disabled>Unload model</button></div>
+        <p class="fine" id="origin">Checking host and SDK origin…</p>
+        <p class="fine" id="environment"></p>
+      </section>
+      <section class="panel" aria-labelledby="run-title">
+        <div class="section-num">02 · CREW MISSION</div>
+        <h2 id="run-title">Run both PhiBots</h2>
+        <p>The sample uses invented BTC-USD values: reference 100, current 104, a +4% movement. It is not a quote, forecast, or fetched data.</p>
+        <div class="metric-grid">
+          <div class="metric"><span>FIXTURE MOVE</span><strong>+4.00%</strong><small>100 → 104</small></div>
+          <div class="metric"><span>ALERT THRESHOLD</span><strong>3.00%</strong><small>Deterministic</small></div>
+        </div>
+        <button id="run" class="primary stretch" disabled>Run Scout + Skeptic on one Tiny model</button>
+        <button id="export" class="secondary stretch" disabled>Export local qualification JSON</button>
+        <p class="fine">Two isolated, stateless bot sessions are queued sequentially. The same model is reused. They do not have persistent memories or tool access.</p>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="reports-title">
+      <div class="report-heading"><div><div class="section-num">03 · QUALIFICATION EVIDENCE</div><h2 id="reports-title">Live session receipts</h2></div><span class="tag">LOCAL IN-MEMORY</span></div>
+      <p id="message" role="status" aria-live="polite">Nothing has loaded or run.</p>
+      <div id="reports" class="reports">
+        <div class="empty">Press Load after consenting, then run the synthetic crew.</div>
+      </div>
+    </section>
+    <footer>
+      <span>PHI369 · LEDGER ABOVE EGO</span>
+      <a href="https://github.com/MichaelWave369/PhiBot">PhiBot source</a>
+      <a href="https://github.com/MichaelWave369/PocketBrain">PocketBrain source</a>
+    </footer>
+  </main>
+</body>
+</html>
