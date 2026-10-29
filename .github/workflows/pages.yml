@@ -38,6 +38,12 @@ jobs:
       - name: Build React showcase
         run: npm run build
         working-directory: site
+      - name: Package isolated PocketBrain browser lab
+        run: |
+          npm install --no-audit --no-fund
+          npm run market:build
+          mkdir -p site/dist/market-lab
+          cp -R .market-host-dist/. site/dist/market-lab/
       - name: Upload Pages artifact on main
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
