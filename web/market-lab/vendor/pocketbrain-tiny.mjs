@@ -109,8 +109,53 @@ export function createTinyRunner({
     }
   };
 
+  const inspectPrompt = async (prompt) => {
+    // Explicit, model-loaded, read-only inspection; never invokes generation.
+    // This is the tokenizer API's rendering, NOT proof of the exact ONNX token IDs used.
+    const tokenizer = generator.tokenizer;
+    if (!tokenizer || typeof tokenizer.apply_chat_template !== 'function') {
+      return {
+        schema: 'phibot.market.template-inspection.v1',
+        status: 'API_UNAVAILABLE', method: 'apply_chat_template',
+        addGenerationPromptRequested: true,
+        inputMessages: 'VENDORED_SYSTEM_PLUS_USER',
+        renderedPreview: null, renderedLength: null, previewClipped: false,
+        exactGeneratorInputTokenSequenceVerified: false, errorClass: null,
+      };
+    }
+    try {
+      const rendered = await tokenizer.apply_chat_template(buildTinyMessages(prompt), {
+        tokenize: false, add_generation_prompt: true,
+      });
+      if (typeof rendered !== 'string') {
+        throw new TypeError('Tokenizer returned non-text template.');
+      }
+      return {
+        schema: 'phibot.market.template-inspection.v1',
+        status: 'TOKENIZER_RENDERED', method: 'apply_chat_template',
+        addGenerationPromptRequested: true,
+        inputMessages: 'VENDORED_SYSTEM_PLUS_USER',
+        renderedPreview: rendered.slice(0, 2048),
+        renderedLength: rendered.length,
+        previewClipped: rendered.length > 2048,
+        exactGeneratorInputTokenSequenceVerified: false, errorClass: null,
+      };
+    } catch (error) {
+      return {
+        schema: 'phibot.market.template-inspection.v1',
+        status: 'RENDER_ERROR', method: 'apply_chat_template',
+        addGenerationPromptRequested: true,
+        inputMessages: 'VENDORED_SYSTEM_PLUS_USER',
+        renderedPreview: null, renderedLength: null, previewClipped: false,
+        exactGeneratorInputTokenSequenceVerified: false,
+        errorClass: error instanceof Error ? error.name.slice(0, 40) : 'Unknown',
+      };
+    }
+  };
+
   return {
     model, device, dtype, initializationMs,
+    inspectPrompt,
     generateWithReceipt,
     async generate(prompt, opts = {}) {
       const result = await generateWithReceipt(prompt, opts);

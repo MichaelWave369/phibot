@@ -6,12 +6,15 @@ import { auditNegativeControls, checkDynamicResponse, makeDynamicChallengeCases,
 import { reviewAdaptiveAttempt, type AdaptiveStrategy, type AdaptiveAttemptReview } from "./adaptive-challenge.js";
 import { CAPABILITY_LEVELS, makeCapabilityProbe, reviewCapabilityProbe, summarizeCapabilityReviews,
   type CapabilityProbe, type CapabilityReview } from "./capability-ladder.js";
+import { makeIntegrityProbes, reviewIntegrityProbe, compareIntegrityRuns,
+  type TemplateInspection, type IntegrityReview } from "./inference-integrity.js";
 
 export type TinyDevice = "auto" | "webgpu" | "wasm";
 export type BrowserLabPhase = "idle" | "loading" | "ready" | "running" | "disposing" | "error";
 
 export interface BrowserTinyClient extends TinySdkClient {
   load(options: { preferredDevice: TinyDevice; onProgress?: (event: unknown) => void }): Promise<unknown>;
+  inspectPrompt?(prompt: string): Promise<TemplateInspection>;
   dispose(): Promise<void>;
 }
 
@@ -121,6 +124,33 @@ export interface CapabilityLadderReport {
   financialActionsAuthorized: false;
 }
 
+export interface InferenceIntegrityReport {
+  schema: "phibot.browser-inference-integrity.v1";
+  fixture: "SEEDED_SYNTHETIC_ONLY";
+  runId: string;
+  runAt: string;
+  seed: number;
+  attempts: readonly Readonly<{
+    probe: CapabilityProbe;
+    templateInspection: TemplateInspection;
+    response: TinyAdvisory;
+    review: IntegrityReview;
+  }>[];
+  sdkReportedBackend: "webgpu" | "wasm" | null;
+  sdkReportedDtype: string | null;
+  sdkReportedModel: string | null;
+  sdkVersionClaim: "0.1.0-experimental";
+  sdkRuntimeFinishReasonAvailable: false;
+  tokenizerRenderingEqualsActualInputTokensProven: false;
+  modelAssetsIndependentlyVerified: false;
+  computeBackendIndependentlyVerified: false;
+  authority: "READ_ONLY_ADVISORY";
+  realPricesChecked: false;
+  sourceVerified: false;
+  modelOutputTrusted: false;
+  financialActionsAuthorized: false;
+}
+
 /**
  * Experimental browser-only qualification host, not the Node PhiBotRuntime.
  * No storage, fetch, timers, broker tools or ambient model downloads.
@@ -129,7 +159,7 @@ export class BrowserMarketLab {
   private phase: BrowserLabPhase = "idle";
   private client: BrowserTinyClient | null = null;
   private fleet: PocketBrainTinyFleet | null = null;
-  private reports: Array<BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport> = [];
+  private reports: Array<BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport | InferenceIntegrityReport> = [];
   private failure: string | null = null;
 
   getStatus(): Readonly<{
@@ -153,7 +183,7 @@ export class BrowserMarketLab {
   }
 
   /** A snapshot, never a reference to internal mutable history. */
-  getReports(): readonly (BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport)[] {
+  getReports(): readonly (BrowserLabReport | DynamicChallengeReport | AdaptiveChallengeReport | CapabilityLadderReport | InferenceIntegrityReport)[] {
     return structuredClone(this.reports);
   }
 
@@ -427,6 +457,108 @@ export class BrowserMarketLab {
     } finally {
       this.phase = "ready";
     }
+  }
+
+  /** Three ordered probes, each with tokenizer-render evidence and original SDK metadata. */
+  async runInferenceIntegrity(seed: number, now: Date = new Date()): Promise<InferenceIntegrityReport> {
+    if (this.phase !== "ready" || !this.client?.getStatus().ready) {
+      throw new Error("Click Load PocketBrain Tiny and complete initialization first.");
+    }
+    const cases = makeDynamicChallengeCases(seed, now);
+    const probes = makeIntegrityProbes(cases[0]!);
+    this.phase = "running";
+    try {
+      const attempts: Array<{
+        probe: CapabilityProbe;
+        templateInspection: TemplateInspection;
+        response: TinyAdvisory;
+        review: IntegrityReview;
+      }> = [];
+      for (const probe of probes) {
+        let templateInspection: TemplateInspection = {
+          schema: "phibot.market.template-inspection.v1",
+          status: "API_UNAVAILABLE", method: "apply_chat_template",
+          addGenerationPromptRequested: true,
+          inputMessages: "VENDORED_SYSTEM_PLUS_USER",
+          renderedPreview: null, renderedLength: null, previewClipped: false,
+          exactGeneratorInputTokenSequenceVerified: false, errorClass: null,
+        };
+        if (typeof this.client!.inspectPrompt === "function") {
+          try {
+            templateInspection = await this.client!.inspectPrompt(probe.prompt);
+          } catch {
+            templateInspection = { ...templateInspection, status: "RENDER_ERROR", errorClass: "SDK_INSPECTION_EXCEPTION" };
+          }
+        }
+        let response: TinyAdvisory;
+        let runReceipt: unknown = null;
+        try {
+          const generated = await this.client!.generate(probe.prompt, {
+            mode: "baseline", maxNewTokens: 48,
+          });
+          runReceipt = generated.receipt;
+          const valid = generated.receipt?.schema === "POCKETBRAIN_TINY_RUN_V2" &&
+            typeof generated.text === "string" && generated.text.trim() !== "";
+          response = valid
+            ? Object.freeze({
+              status: "advisory" as const, botId: probe.botId,
+              text: generated.text.slice(0, 800), hostCaptureClipped: generated.text.length > 800,
+              model: this.client!.getStatus().model,
+              receiptSchema: "POCKETBRAIN_TINY_RUN_V2" as const,
+              provenance: "unverified-model-output" as const,
+              sdkReportedBackend: generated.receipt.backend === "webgpu" || generated.receipt.backend === "wasm"
+                ? generated.receipt.backend : null,
+              sdkReportedModel: typeof generated.receipt.model === "string"
+                ? generated.receipt.model.slice(0, 120) : null,
+              sdkReportedDtype: typeof generated.receipt.dtype === "string"
+                ? generated.receipt.dtype.slice(0, 30) : null,
+            })
+            : Object.freeze({status: "rejected" as const, botId: probe.botId, reason: "invalid-receipt" as const});
+        } catch {
+          response = Object.freeze({status: "rejected" as const, botId: probe.botId, reason: "generation-failed" as const});
+        }
+        attempts.push({probe, templateInspection, response, review: reviewIntegrityProbe(probe, response, runReceipt)});
+      }
+      const sdk = this.client.getStatus();
+      const report: InferenceIntegrityReport = Object.freeze({
+        schema: "phibot.browser-inference-integrity.v1" as const,
+        fixture: "SEEDED_SYNTHETIC_ONLY" as const,
+        runId: "inference-integrity-" + (this.reports.length + 1),
+        runAt: now.toISOString(), seed, attempts,
+        sdkReportedBackend: sdk.device === "webgpu" || sdk.device === "wasm" ? sdk.device : null,
+        sdkReportedDtype: typeof sdk.dtype === "string" ? sdk.dtype.slice(0, 30) : null,
+        sdkReportedModel: typeof sdk.model === "string" ? sdk.model.slice(0, 120) : null,
+        sdkVersionClaim: "0.1.0-experimental" as const,
+        sdkRuntimeFinishReasonAvailable: false as const,
+        tokenizerRenderingEqualsActualInputTokensProven: false as const,
+        modelAssetsIndependentlyVerified: false as const,
+        computeBackendIndependentlyVerified: false as const,
+        authority: "READ_ONLY_ADVISORY" as const,
+        realPricesChecked: false as const,
+        sourceVerified: false as const,
+        modelOutputTrusted: false as const,
+        financialActionsAuthorized: false as const,
+      });
+      this.reports.push(report);
+      return structuredClone(report);
+    } finally {
+      this.phase = "ready";
+    }
+  }
+
+  getIntegrityComparisons(): readonly ReturnType<typeof compareIntegrityRuns>[] {
+    const reports = this.reports.filter((r): r is InferenceIntegrityReport =>
+      r.schema === "phibot.browser-inference-integrity.v1");
+    const comparisons: ReturnType<typeof compareIntegrityRuns>[] = [];
+    for (let i = 0; i < reports.length; i++) {
+      for (let j = i + 1; j < reports.length; j++) {
+        if (reports[i]!.seed === reports[j]!.seed &&
+            reports[i]!.sdkReportedBackend !== reports[j]!.sdkReportedBackend) {
+          comparisons.push(compareIntegrityRuns(reports[i]!, reports[j]!));
+        }
+      }
+    }
+    return structuredClone(comparisons);
   }
 
   async unload(): Promise<void> {

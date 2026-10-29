@@ -12,6 +12,7 @@ const runButton = element("run");
 const dynamicButton = element("run-dynamic");
 const adaptiveButton = element("run-adaptive");
 const ladderButton = element("run-ladder");
+const integrityButton = element("run-integrity");
 const ladderSeed = element("ladder-seed");
 const exportButton = element("export");
 const reportsEl = element("reports");
@@ -32,6 +33,7 @@ function render() {
   dynamicButton.disabled = phase !== "ready";
   adaptiveButton.disabled = phase !== "ready";
   ladderButton.disabled = phase !== "ready";
+  integrityButton.disabled = phase !== "ready";
   ladderSeed.disabled = phase !== "ready" && phase !== "idle" && phase !== "error";
   exportButton.disabled = reportCount === 0;
   consent.disabled = !["idle", "error"].includes(phase);
@@ -236,6 +238,70 @@ function appendLadderReport(result) {
   }
 }
 
+function appendIntegrityReport(result) {
+  reportsEl.replaceChildren();
+  const summary = document.createElement("div");
+  summary.className = "bot-report";
+  const title = document.createElement("h3");
+  title.textContent = "R2.5 Inference Integrity · seed " + result.seed;
+  const info = document.createElement("p");
+  const renders = result.attempts.filter(x => x.templateInspection.status === "TOKENIZER_RENDERED").length;
+  const receives = result.attempts.filter(x => x.review.receipt.sdkReceiptValid).length;
+  info.textContent =
+    "Loaded-tokenizer template renders: " + renders + "/3" +
+    "\nSDK receipts: " + receives + "/3" +
+    "\nSDK-reported backend: " + (result.sdkReportedBackend ?? "not reported") +
+    ", dtype: " + (result.sdkReportedDtype ?? "not reported") +
+    "\nActual generator input tokens verified: NO" +
+    "\nHardware and model assets independently attested: NO";
+  summary.append(title, info);
+  reportsEl.append(summary);
+  for (const item of result.attempts) {
+    const card = document.createElement("div");
+    card.className = "bot-report";
+    const heading = document.createElement("h3");
+    heading.textContent = item.probe.level + " · " + item.probe.caseId;
+    const meta = document.createElement("small");
+    const r = item.review.receipt;
+    meta.textContent =
+      "Tokenization inspection: " + item.templateInspection.status +
+      " · backend receipt: " + (r.sdkReportedBackend ?? "not reported") +
+      " · decode mode: " + (r.sdkReportedDecodeMode ?? "not reported") +
+      " · observed callback events: " + (r.observedTokenCallbacks ?? "not reported") +
+      " · elapsed JS ms: " + (r.generationWallMs ?? "not reported") +
+      "\nGrade: " + item.review.disposition +
+      " · arithmetic: " + item.review.strictReview.numericAccuracy +
+      " · echo signals: " + (item.review.echoSignals.join(", ") || "none");
+    const original = document.createElement("p");
+    original.textContent =
+      "TOKENIZER-RENDERED CHAT TEMPLATE PREVIEW (not independently verified as actual input tokens):\n" +
+      (item.templateInspection.renderedPreview ?? "(unavailable)") +
+      "\n\nORIGINAL UNTRUSTED MODEL OUTPUT:\n" +
+      (item.review.rawText ?? "(no valid output)") +
+      "\n\nHOST EXPECTED ANSWER (not in prompt):\n" + item.review.hostExpectedText;
+    card.append(heading, meta, original);
+    reportsEl.append(card);
+  }
+  const comparisons = lab.getIntegrityComparisons();
+  for (const result of comparisons) {
+    const card = document.createElement("div");
+    card.className = "bot-report";
+    const heading = document.createElement("h3");
+    heading.textContent = "Same-seed manual backend comparison";
+    const info = document.createElement("p");
+    info.textContent =
+      "Backend A: " + result.backendA + " (" + result.dtypeA + ")" +
+      "\nBackend B: " + result.backendB + " (" + result.dtypeB + ")" +
+      "\nSame prompts: " + result.sameInputs +
+      " · same reported model: " + result.sameSdkModelClaim +
+      "\nRaw outputs identical: " + result.outputsIdentical +
+      "\nSame quantization: " + result.sameQuantization +
+      "\nNumerical parity independently proven: NO";
+    card.append(heading, info);
+    reportsEl.append(card);
+  }
+}
+
 consent.addEventListener("change", render);
 loadButton.addEventListener("click", async () => {
   if (!consent.checked) return;
@@ -352,6 +418,32 @@ ladderButton.addEventListener("click", async () => {
   render();
 });
 
+integrityButton.addEventListener("click", async () => {
+  const entered = ladderSeed.value.trim();
+  if (entered === "" && !globalThis.crypto?.getRandomValues) {
+    message("Random seed generator unavailable. Integrity run not started.");
+    return;
+  }
+  const seed = entered === "" ? crypto.getRandomValues(new Uint32Array(1))[0] : Number(entered);
+  if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) {
+    message("Seed must be an unsigned 32-bit integer.");
+    return;
+  }
+  message("Inspecting loaded tokenizer and running three read-only diagnostic probes…");
+  try {
+    const task = lab.runInferenceIntegrity(seed);
+    render();
+    const result = await task;
+    ladderSeed.value = String(seed);
+    appendIntegrityReport(result);
+    message("R2.5 finished. Replay seed: " + seed +
+      ". To compare backend claims, unload, select the other backend, reload and rerun with this seed.");
+  } catch (error) {
+    message("Integrity diagnostic failed: " + (error instanceof Error ? error.message : String(error)));
+  }
+  render();
+});
+
 unloadButton.addEventListener("click", async () => {
   try {
     await lab.unload();
@@ -366,7 +458,7 @@ exportButton.addEventListener("click", () => {
   const reports = lab.getReports();
   if (!reports.length) return;
   const evidence = {
-    schema: "phibot.browser-market-lab-export.v5",
+    schema: "phibot.browser-market-lab-export.v6",
     exportTime: new Date().toISOString(),
     hostOrigin: location.origin,
     sdkOrigin: new URL(SDK_URL).origin,
@@ -377,17 +469,18 @@ exportButton.addEventListener("click", () => {
     sdkReportedBackend: lab.getStatus().sdkReportedBackend,
     sdkReportedDtype: lab.getStatus().sdkReportedDtype,
     backendIndependentlyVerified: false,
-    realityCheckMeaning: "R21_FIXED_R22_DYNAMIC_R23_ADAPTIVE_R24_CAPABILITY_LADDER_REVIEW_ONLY",
+    realityCheckMeaning: "R21_TO_R24_LEGACY_R25_INFERENCE_DIAGNOSTIC_NO_INDEPENDENT_ATTESTATION",
     independentParity: "NOT_TESTED",
     sdkSource: "VENDORED_FIRST_PARTY_IN_PHIBOT_COMMIT",
     externalRuntimeAndModelAttestation: "NOT_ATTESTED",
     browserQualification: "OPERATOR_REVIEW_REQUIRED",
     reports,
+    manualBackendComparisons: lab.getIntegrityComparisons(),
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "phibot-17-r24-capability-ladder-evidence.json";
+  a.download = "phibot-17-r25-inference-integrity-evidence.json";
   document.body.append(a);
   a.click();
   a.remove();
