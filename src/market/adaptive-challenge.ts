@@ -66,10 +66,12 @@ export function reviewAdaptiveAttempt(
     /\bCAUSE\s*=\s*(?!UNKNOWN(?:$|;|\s))\S+/i.test(text);
 
   let formatMatch = false;
+  let symbolMatches: boolean | null = null;
   let numericAccuracy: AdaptiveAttemptReview["numericAccuracy"] = "NOT_SCORABLE";
   if (strategy === "compact-fields") {
     const existing = checkDynamicResponse(test, response);
     formatMatch = existing.formatCompliant;
+    symbolMatches = existing.symbolMatches;
     numericAccuracy = existing.numericalAccuracy;
   } else if (strategy === "percent-only-guarded") {
     formatMatch = PERCENT_ONLY.test(text) && text === rawText;
@@ -84,6 +86,7 @@ export function reviewAdaptiveAttempt(
   if (!sdkReceiptValid) reasons.push("NO_VALID_SDK_RECEIPT");
   if (!formatMatch) reasons.push("FORMAT_MISMATCH");
   if (numericAccuracy === "MISMATCH") reasons.push("NUMERIC_MISMATCH");
+  if (symbolMatches === false) reasons.push("SYMBOL_MISMATCH");
   if (numericAccuracy === "NOT_SCORABLE") reasons.push("NUMERIC_NOT_SCORABLE");
   if (echoDetected) reasons.push("PROMPT_ECHO_SIGNAL");
   if (claimDetected) reasons.push("UNSUPPORTED_CLAIM_SIGNAL");
