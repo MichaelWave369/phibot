@@ -33,7 +33,7 @@ function mockAdaptive(
           const delta = (Number(m[3]) - Number(m[2])) / Number(m[2]) * 100;
           const good = "SYMBOL=" + m[1] + ";REFERENCE=" + m[2] +
             ";CURRENT=" + m[3] + ";MOVE_PCT=" + Math.round(delta) + ";CAUSE=UNKNOWN";
-          text = policy === "always-correct" || m[1] === "SIM-A" ? good :
+          text = policy === "always-correct" || (policy === "recover" && m[1] === "SIM-A") ? good :
             "Symbol " + m[1] + ", reference " + m[2] + ", current " + m[3] + ".";
         }
         await Promise.resolve();
