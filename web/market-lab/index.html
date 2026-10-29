@@ -47,25 +47,26 @@
       </section>
       <section class="panel" aria-labelledby="run-title">
         <div class="section-num">02 · CREW MISSION</div>
-        <h2 id="run-title">Model Capability Ladder · R2.4</h2>
-        <p><strong>R2.4:</strong> Scout and Skeptic receive six fictional, read-only tests: addition, percent change and structured reporting. The host calculates all correct answers independently. Re-enter a previous seed to replay its exact numbers, or leave the seed empty for a fresh trial.</p>
+        <h2 id="run-title">Inference Integrity Gate · R2.5</h2>
+        <p><strong>R2.5:</strong> After loading the model, inspect the loaded tokenizer's chat-template rendering (when supported), run three synthetic probes with SDK timing/decode receipts, and compare WebGPU versus WASM using the same seed. This is a diagnostic, not independent GPU or tokenizer-token attestation.</p>
         <div class="metric-grid">
           <div class="metric"><span>FIXTURE MOVE</span><strong>+4.00%</strong><small>100 → 104</small></div>
           <div class="metric"><span>ALERT THRESHOLD</span><strong>3.00%</strong><small>Deterministic</small></div>
         </div>
         <div class="field"><label for="ladder-seed">Replay seed (optional; blank generates fresh)</label><input id="ladder-seed" type="number" min="0" max="4294967295" step="1" placeholder="Blank = fresh seed" /></div>
-        <button id="run-ladder" class="primary stretch" disabled>Run R2.4 capability ladder · 6 probes</button>
+        <button id="run-integrity" class="primary stretch" disabled>Run R2.5 inference integrity · 3 probes</button>
+        <button id="run-ladder" class="secondary stretch" disabled>Run R2.4 capability ladder comparison</button>
         <button id="run-adaptive" class="secondary stretch" disabled>Run R2.3 adaptive comparison</button>
         <button id="run-dynamic" class="secondary stretch" disabled>Run R2.2 long-prompt comparison</button>
         <button id="run" class="secondary stretch" disabled>R2.1 legacy 100 → 104 fixed fixture</button>
         <button id="export" class="secondary stretch" disabled>Export local qualification JSON</button>
-        <p class="fine">R2.4 makes exactly six serialized model calls per click, with no hidden retry. Arithmetic truth always comes from the host, never the model. The SDK wraps prompts in system/user messages; final tokenizer chat-template output and hardware execution remain unattested.</p>
+        <p class="fine">Backend comparison: select WebGPU, load, run R2.5, unload; switch to WASM, load, reuse the same seed and rerun R2.5. Both reports stay in this tab until reload or export. WASM typically uses a different quantization. Exact model input tokens, underlying GPU execution and finish reason remain unverified.</p>
       </section>
     </div>
 
     <section class="panel" aria-labelledby="reports-title">
       <div class="report-heading"><div><div class="section-num">03 · QUALIFICATION EVIDENCE</div><h2 id="reports-title">Reality Check · untrusted model outputs</h2></div><span class="tag">LOCAL IN-MEMORY</span></div>
-      <p class="fine">R2.4 separates easy addition from percentage math and structured output, with per-level results, seed replay and all original untrusted replies. R2.1, R2.2 and R2.3 remain accessible for comparison. A passing format is review-only, not proof of general reasoning, independent model attestation or action authorization.</p>
+      <p class="fine">R2.5 records inspected chat-template previews, model text, reported decode/timing metadata and echo indicators for three tasks. Same-seed cross-backend comparisons remain observational because quantization and execution can differ. Previous R2.1–R2.4 experiments remain available; no output authorizes an action.</p>
       <p id="message" role="status" aria-live="polite">Nothing has loaded or run.</p>
       <div id="reports" class="reports">
         <div class="empty">Press Load after consenting, then run the synthetic crew.</div>
