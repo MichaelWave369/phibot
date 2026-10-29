@@ -33,6 +33,7 @@ test("model loader is shipped only as a separately reviewed public lab", () => {
   const build = read("scripts/build-market-lab.mjs");
   const pages = read(".github/workflows/pages.yml");
   assert.match(build, /vendor\/sdk\/v0\.1\/index\.mjs/);
+  assert.match(build, /reality-check\.js/);
   assert.match(build, /vendor\/pocketbrain-tiny-metrics\.mjs/);
   assert.match(pages, /market:build/);
   assert.match(pages, /site\/dist\/market-lab/);

@@ -4,11 +4,21 @@ on:
   pull_request:
     paths:
       - "site/**"
+      - "web/market-lab/**"
+      - "src/market/**"
+      - "scripts/build-market-lab.mjs"
+      - "test/market-reality-check.test.ts"
+      - "test/market-browser-lab.test.ts"
       - ".github/workflows/pages.yml"
   push:
     branches: [main]
     paths:
       - "site/**"
+      - "web/market-lab/**"
+      - "src/market/**"
+      - "scripts/build-market-lab.mjs"
+      - "test/market-reality-check.test.ts"
+      - "test/market-browser-lab.test.ts"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
