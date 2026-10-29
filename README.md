@@ -128,3 +128,7 @@ Learning Gate R1 adds an operator-triggered, **local-only** failure-observation 
 ### PHIBOT-31: Learning Gate R2 live CI read bridge
 
 The operator-invoked `npm run learning:ci` command can preview (default) or explicitly locally capture one **GitHub-read, SHA-pinned, failed CI check** on a still-authorized PhiBot draft PR. It rechecks PR identity and failed check evidence, requires a scoped repository allowlist, and makes **GitHub GET requests only**. Local capture produces the same **R1 LOCAL_SELF_REPORT** capsule class, not a trusted/attested policy authority. No queue automation, CI retry, write grant, merge, policy promotion, or automatic enforcement. See [R2 CI bridge guide](docs/LEARNING_GATE_R2_CI_BRIDGE.md).
+
+### PHIBOT-32: Learning Gate R3 same-provider CI corroboration and human review
+
+R3 adds a separate check-run detail verification pass after R2's SHA-bound CI preflight. `npm run learning:review:verify -- ...` previews an unsigned, metadata-only audit by default; `--save` explicitly records a local immutable audit. Two recent audits for distinct failing commit SHAs and check-run IDs may produce a **human-review-only** packet via `npm run learning:review:propose -- <audit-id-1> <audit-id-2>`. **Both verification paths use GitHub; this is not independent cryptographic attestation.** No automatic policy promotion, grants, merges, CI retries, or queue integration. See [R3 review guide](docs/LEARNING_GATE_R3_REVIEW.md).
