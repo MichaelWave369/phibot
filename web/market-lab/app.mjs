@@ -9,6 +9,7 @@ const backend = element("backend");
 const loadButton = element("load");
 const unloadButton = element("unload");
 const runButton = element("run");
+const dynamicButton = element("run-dynamic");
 const exportButton = element("export");
 const reportsEl = element("reports");
 const messageEl = element("message");
@@ -25,6 +26,7 @@ function render() {
   loadButton.disabled = !consent.checked || !["idle", "error"].includes(phase);
   unloadButton.disabled = !["ready", "error"].includes(phase);
   runButton.disabled = phase !== "ready";
+  dynamicButton.disabled = phase !== "ready";
   exportButton.disabled = reportCount === 0;
   consent.disabled = !["idle", "error"].includes(phase);
   backend.disabled = !["idle", "error"].includes(phase);
@@ -75,6 +77,63 @@ function appendReport(result) {
   }
 }
 
+function appendDynamicReport(result) {
+  reportsEl.replaceChildren();
+  const header = document.createElement("div");
+  header.className = "bot-report";
+  const title = document.createElement("h3");
+  title.textContent = "Dynamic R2.2 · " + result.runId + " · seed " + result.seed;
+  const summary = document.createElement("p");
+  const s = result.scores;
+  summary.textContent =
+    "SDK receipts: " + s.sdkReceipts + "/" + s.total +
+    "\nStrict format: " + s.formatMatches + "/" + s.total +
+    "\nNumerical matches: " + s.numericalMatches + "/" + s.numericalScorable +
+    " scorable (" + s.total + " total)" +
+    "\nUnsupported claim signals: " + s.unsupportedClaimSignals +
+    "\nReview-only complete matches: " + s.reviewOnlyMatches + "/" + s.total +
+    "\nChecker negative controls held: " + result.negativeControls.correctlyHeld +
+    "/" + result.negativeControls.total +
+    "; false acceptances: " + result.negativeControls.falseAcceptances +
+    "\nSDK-reported backend: " + (result.sdkReportedBackend ?? "not reported") +
+    " · independent attestation: NO";
+  header.append(title, summary);
+  reportsEl.append(header);
+  for (let i = 0; i < result.cases.length; i++) {
+    const challenge = result.cases[i];
+    const check = result.checks[i];
+    const card = document.createElement("div");
+    card.className = "bot-report";
+    const heading = document.createElement("h3");
+    heading.textContent = challenge.botId + " · " + challenge.observation.symbol;
+    const detail = document.createElement("small");
+    detail.textContent =
+      "Reference " + challenge.observation.referencePrice +
+      " → current " + challenge.observation.price +
+      " · expected " + check.expected.movePct + "% · threshold " +
+      challenge.observation.thresholdPct + "%" +
+      "\n\nSDK receipt valid: " + check.inferenceReceiptValid +
+      " · format: " + check.formatCompliant +
+      " · numerical: " + check.numericalAccuracy +
+      " · claim signal: " + check.unsupportedClaimSignal +
+      "\nDisposition: " + check.disposition +
+      " · reason codes: " + (check.reasonCodes.join(", ") || "none");
+    const text = document.createElement("p");
+    text.textContent = "UNTRUSTED ORIGINAL MODEL OUTPUT:\n" +
+      (check.rawText ?? "(no valid response)") +
+      "\n\nThe expected values above were calculated locally from the invented fixture.";
+    card.append(heading, detail, text);
+    reportsEl.append(card);
+  }
+  const audit = document.createElement("p");
+  audit.className = "fine";
+  audit.textContent = "Local validator controls: " + result.negativeControls.cases.map(
+    x => x.caseId + ":" + x.control + "=" + (x.held ? "held" : "FALSE ACCEPT")
+  ).join(" · ") +
+    "\nThese controls never reached PocketBrain. No real prices, actions or claim of general factuality.";
+  reportsEl.append(audit);
+}
+
 consent.addEventListener("change", render);
 loadButton.addEventListener("click", async () => {
   if (!consent.checked) return;
@@ -116,6 +175,31 @@ runButton.addEventListener("click", async () => {
   render();
 });
 
+dynamicButton.addEventListener("click", async () => {
+  if (!globalThis.crypto?.getRandomValues) {
+    message("Secure challenge seed generator unavailable. Dynamic challenge not started.");
+    return;
+  }
+  // A browser-generated seed makes the fresh inputs reproducible from the exported receipt.
+  // It is not a secrecy primitive or an unpredictable security challenge to an adversary.
+  const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+  message("Running two DIFFERENT synthetic arithmetic challenges sequentially…");
+  try {
+    const task = lab.runDynamicChallenge(SDK_URL, seed);
+    render();
+    const result = await task;
+    appendDynamicReport(result);
+    message(result.scores.sdkReceipts + "/2 SDK receipts, " +
+      result.scores.numericalMatches + "/" + result.scores.numericalScorable +
+      " scorable arithmetic matches; checker controls " +
+      result.negativeControls.correctlyHeld + "/" + result.negativeControls.total +
+      " held. All output untrusted, read-only and review-only.");
+  } catch (error) {
+    message("Dynamic challenge failed: " + (error instanceof Error ? error.message : String(error)));
+  }
+  render();
+});
+
 unloadButton.addEventListener("click", async () => {
   try {
     await lab.unload();
@@ -130,7 +214,7 @@ exportButton.addEventListener("click", () => {
   const reports = lab.getReports();
   if (!reports.length) return;
   const evidence = {
-    schema: "phibot.browser-market-lab-export.v2",
+    schema: "phibot.browser-market-lab-export.v3",
     exportTime: new Date().toISOString(),
     hostOrigin: location.origin,
     sdkOrigin: new URL(SDK_URL).origin,
@@ -141,7 +225,7 @@ exportButton.addEventListener("click", () => {
     sdkReportedBackend: lab.getStatus().sdkReportedBackend,
     sdkReportedDtype: lab.getStatus().sdkReportedDtype,
     backendIndependentlyVerified: false,
-    realityCheckMeaning: "NARROW_SYNTHETIC_STRING_MATCH_NOT_GENERAL_FACT_CHECK",
+    realityCheckMeaning: "R21_FIXED_ALLOWLIST_AND_R22_SEEDED_STRICT_FIELDS_REVIEW_ONLY",
     independentParity: "NOT_TESTED",
     sdkSource: "VENDORED_FIRST_PARTY_IN_PHIBOT_COMMIT",
     externalRuntimeAndModelAttestation: "NOT_ATTESTED",
@@ -151,7 +235,7 @@ exportButton.addEventListener("click", () => {
   const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "phibot-17-r21-reality-check-evidence.json";
+  a.download = "phibot-17-r22-dynamic-challenge-evidence.json";
   document.body.append(a);
   a.click();
   a.remove();
