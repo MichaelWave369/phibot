@@ -41,9 +41,9 @@ npm.cmd run learning:capture -- C:\Temp\failure-1.json
 npm.cmd run learning:capture -- C:\Temp\failure-2.json
 npm.cmd run learning:list
 # Copy the 64-hex signature printed by capture/list:
-npm.cmd run learning:propose -- <signature>
+npm.cmd run learning:propose -- 'PASTE_64_HEX_SIGNATURE_HERE'
 # Copy the emitted 64-hex proposal_id:
-npm.cmd run learning:replay -- <proposal_id> C:\Temp\failure-2.json
+npm.cmd run learning:replay -- 'PASTE_64_HEX_PROPOSAL_ID_HERE' C:\Temp\failure-2.json
 ~~~
 
 Set PHIBOT_LEARNING_HOME to an operator-owned local directory to override the default .phibot/learning-gate/. Files are created exclusively and never intentionally overwritten. Protect the directory with OS permissions, keep it out of version control, and do not store tokens or raw trace data alongside it.
