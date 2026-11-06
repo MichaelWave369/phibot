@@ -71,4 +71,7 @@ export interface PhiBotServiceOptions {
 export interface PhiBotServiceHttpOptions {
   host?: string;
   port?: number;
+  /** Explicit opt-in local control secret; never returned over HTTP. */
+  modelControlToken?: string;
+  ollamaPort?: number;
 }
