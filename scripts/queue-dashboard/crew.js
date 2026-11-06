@@ -9,6 +9,7 @@ const node = (tag, className, value) => {
 };
 let crew = null;
 let catalog = null;
+let readiness = null;
 let plannerEnabled = false;
 let plannerToken = null;
 let planning = false;
@@ -86,7 +87,21 @@ function renderCrew(data) {
     card.append(node("p", "crew-model", "Configured model: " +
       bot.model.provider + " / " + bot.model.name));
     card.append(node("p", "muted small", String(bot.activeRuns) +
-      " reported active run(s) · configured model not probed"));
+      " reported active run(s)"));
+    const receipt = bot.model.provider === "ollama" &&
+      readiness?.schema === "phibot.crew.readiness-view.v1"
+      ? readiness.records.find(item => item.model === bot.model.name)
+      : null;
+    const evidenceLabel = !receipt ? "NO LOCAL INFERENCE RECEIPT" :
+      receipt.status === "RECENT_PROBE_PASS_SELF_REPORT"
+      ? "RECENT LOCAL PROBE PASS · SELF-REPORT" :
+      receipt.status === "FAILED_PROBE" ? "LOCAL PROBE FAILED" :
+      "LOCAL PROBE STALE";
+    card.append(node("p", "crew-readiness", evidenceLabel));
+    if (receipt) card.append(node("p", "muted small",
+      "Last probe " + new Date(receipt.checkedAt).toLocaleString() +
+      " · port " + receipt.ollamaPort +
+      " · current model availability is not established"));
     picker(card, bot);
     roster.append(card);
   }
@@ -129,8 +144,21 @@ async function refreshCrew() {
     byId("crew-count").textContent = "Unknown";
   }
 }
+async function refreshReadiness() {
+  try {
+    readiness = await get("/api/readiness");
+    if (readiness.schema !== "phibot.crew.readiness-view.v1" ||
+        !Array.isArray(readiness.records)) throw Error("Unexpected local evidence");
+    byId("crew-probe-status").textContent =
+      readiness.records.length + " LOCAL MODEL PROBE RECORD(S) · SELF-REPORTED · NOT ATTESTED";
+  } catch {
+    readiness = null;
+    byId("crew-probe-status").textContent =
+      "LOCAL PROBE EVIDENCE UNAVAILABLE · NO READINESS CLAIM";
+  }
+}
 async function refreshAll() {
-  await refreshModels();
+  await Promise.all([refreshModels(), refreshReadiness()]);
   await refreshCrew();
 }
 async function propose(botId, modelName, mission) {

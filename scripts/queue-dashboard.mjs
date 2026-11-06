@@ -146,6 +146,7 @@ export async function startQueueDashboard({
   plannerEnabled = env.PHIBOT_CREW_PLANNER_ACTIONS === "1",
   readCrew = () => readCrewService({ env }),
   readModels = () => readOllamaModels({ env }),
+  readinessDir,
   execute,
 } = {}) {
   const policy = queuePolicy(env);
@@ -177,6 +178,14 @@ export async function startQueueDashboard({
       if (url === "/api/models") {
         try { return json(res, 200, await readModels()); }
         catch { return fixedError(res, 503, "OLLAMA_MODELS_UNAVAILABLE"); }
+      }
+      if (url === "/api/readiness") {
+        try {
+          const { readCrewReadiness } = await import("../dist/src/qualification/crew-readiness.js");
+          return json(res, 200, await readCrewReadiness(
+            readinessDir === undefined ? {} : { dir: readinessDir },
+          ));
+        } catch { return fixedError(res, 503, "CREW_READINESS_EVIDENCE_UNAVAILABLE"); }
       }
       if (url === "/api/state") {
         try {

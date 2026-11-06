@@ -13,6 +13,8 @@ export interface OllamaProviderOptions {
   keepAlive?: string | number;
   numPredict?: number;
   repeatRecovery?: boolean;
+  /** Require Ollama to echo the exact requested model (qualification-only strict mode). */
+  requireModelEcho?: boolean;
   /** Action-free schema, used only by the local Scout shadow pilot. */
   responseMode?: "stage" | "advisory-only";
 }
@@ -154,6 +156,7 @@ export class OllamaProvider implements PhiProvider {
   private readonly keepAlive: string | number;
   private readonly numPredict: number;
   private readonly repeatRecovery: boolean;
+  private readonly requireModelEcho: boolean;
   private readonly responseMode: "stage" | "advisory-only";
 
   constructor(model: string, options: OllamaProviderOptions = {}) {
@@ -169,6 +172,7 @@ export class OllamaProvider implements PhiProvider {
     this.keepAlive = options.keepAlive ?? "10m";
     this.numPredict = options.numPredict ?? 160;
     this.repeatRecovery = options.repeatRecovery ?? true;
+    this.requireModelEcho = options.requireModelEcho ?? false;
     this.responseMode = options.responseMode ?? "stage";
     if (this.responseMode !== "stage" && this.responseMode !== "advisory-only") {
       throw new Error("Unknown Ollama response mode.");
@@ -265,6 +269,9 @@ export class OllamaProvider implements PhiProvider {
     }
 
     const body = result.body;
+    if (this.requireModelEcho && body.model !== this.model) {
+      throw new Error("OLLAMA_MODEL_IDENTITY_MISMATCH");
+    }
     if (
       !isRecord(body.message) ||
       typeof body.message.content !== "string"
