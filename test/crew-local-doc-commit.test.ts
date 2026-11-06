@@ -219,8 +219,10 @@ test("protected/undesignated branch, staged index, or unrelated files are refuse
       /CREW_COMMIT_UNRELATED_CHANGES_OR_STAGED_CONTENT/);
     await rm(join(f.root,"extra.txt"));
     git(f.root,["add","docs/guide.md"]);
+    // The earlier PHIBOT-41 verifier can refuse the staged target before
+    // PHIBOT-42 reaches its own whole-worktree staging guard.
     await assert.rejects(previewLocalDocCommit(args(f)),
-      /CREW_COMMIT_UNRELATED_CHANGES_OR_STAGED_CONTENT/);
+      /CREW_COMMIT_UNRELATED_CHANGES_OR_STAGED_CONTENT|MARKDOWN_APPLY_VERIFY_WORKTREE_STATE_CHANGED/);
     git(f.root,["reset","-q","HEAD","--","docs/guide.md"]);
     git(f.root,["switch","-q","-c","manual-review"]);
     await assert.rejects(previewLocalDocCommit(args(f)),
