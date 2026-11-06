@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-42: Human-gated local Git commit, no remote action
+
+A PHIBOT-41 verified Markdown working-tree edit can now be staged and **committed locally** with a **new one-use Reality Gate grant** through the separate interactive `crew:commit` CLI. It only operates on an explicit `phibot/docs-...` branch, refuses unrelated or staged content, validates the exact approved file hash, commits precisely one path, and updates the local branch using compare-and-swap. `crew:commit:verify` independently checks the parent/commit/tree/blob and filesystem SHA-256. This capability is **not registered for bots or servers**, and **does not push, open a PR, run GitHub CI, deploy, or merge**. See [PHIBOT-42 operator guide](docs/CREW_LOCAL_DOC_COMMIT.md).
+
 ## PHIBOT-41: Explicit Reality Gate for one local Markdown edit
 
 An operator can now take a **previously human-reviewed and checksum-recorded PHIBOT-40 Markdown draft** and, in an interactive local terminal only, authorize one exact **working-tree replacement** through PhiBot's existing one-use Reality Gate. The capability is registered only for this CLI, never as a normal bot tool or server endpoint. The target repository, commit, file, diff and before/after SHA-256 are revalidated; the operator must type `APPLY <Reality-Gate-digest-prefix>`. `crew:apply:verify` independently checks the actual bytes and uncommitted Git state. **No git add/commit/push, PR, merge, CI success, model inference or deploy** results from this operation. See [PHIBOT-41 local operator guide](docs/CREW_MARKDOWN_APPLY.md).
