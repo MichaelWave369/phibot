@@ -331,7 +331,7 @@ export async function verifyAppliedMarkdown({
   if (target.currentSha256 !== intent.afterSha256)
     throw Error("MARKDOWN_APPLY_VERIFY_TARGET_HASH_MISMATCH");
   if (git(root, ["status", "--porcelain=v1", "--untracked-files=no", "--", intent.target]) !==
-      " M " + intent.target)
+      "M " + intent.target)
     throw Error("MARKDOWN_APPLY_VERIFY_WORKTREE_STATE_CHANGED");
   return {
     status: "LOCAL_FILE_HASH_VERIFIED_CI_NOT_RUN",
