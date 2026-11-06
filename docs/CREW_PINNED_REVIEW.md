@@ -10,7 +10,7 @@ Your working clone must have an explicit **repository root allowlist**. This pre
 
 ## PowerShell quick start
 
-From the local PhiBot clone, after reviewing and merging PR #57:
+From the local PhiBot clone, after reviewing and merging the PHIBOT-38 pull request:
 
 ```powershell
 git pull origin main
