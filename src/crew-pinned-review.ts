@@ -16,7 +16,7 @@ import { readPinnedDocument, type PinnedDocument } from "./crew-pinned-source.js
 const ROLES = ["scout", "patch", "skeptic"] as const;
 const STAGES = ["observe", "propose", "verify"] as const;
 const SHA = /^[0-9a-f]{64}$/;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MODEL = /^[A-Za-z0-9][A-Za-z0-9_.:/+-]{0,99}$/;
 const SOURCE = "LOCAL_PINNED_DOC_SELF_REPORT_NOT_ATTESTED" as const;
 const AUTHORITY = "NO_TOOLS_NO_WRITES_NO_GRANTS" as const;
