@@ -59,7 +59,7 @@ export function verifyCrewTrial(value: CrewTrialReceipt): void {
      value.authority!=="NO_TOOLS_NO_WRITES_NO_GRANTS" ||
      value.fixture!==FIXTURE) throw Error("CREW_RECEIPT_INVALID");
   for(let i=0;i<value.steps.length;i++){
-    const s=value.steps[i];
+    const s=value.steps[i]!;
     if(Object.keys(s).sort().join(",")!=="confidence,latencyMs,role,stage,summary" ||
        s?.role!==ROLES[i] || s.stage!==STAGES[i] ||
        typeof s.summary!=="string" || s.summary.length<1 ||
@@ -94,7 +94,7 @@ export async function runCrewTrial({
   const steps:CrewStep[]=[];
   let failed=false;
   for(let i=0;i<3;i++){
-    const role=ROLES[i];const stage=STAGES[i];
+    const role=ROLES[i]!;const stage=STAGES[i]!;
     const context=steps.map(s=>s.role+" (unverified): "+s.summary).join("\n");
     const req:ProviderRequest={stage,manifest:makeManifest(role,model),prior:[],
       input:{task:"Untrusted synthetic fixture: "+DOCUMENT+
