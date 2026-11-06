@@ -65,9 +65,12 @@
             <button id="crew-refresh" class="button secondary small" type="button">Refresh crew</button>
           </div>
         </div>
-        <p class="muted small">Only explicitly connected local PhiBot service data, never demo bots. Model names are configured values, not verified inference. This view cannot change a model, spawn a bot, approve actions or execute tools.</p>
+        <p class="muted small">Only explicitly connected local PhiBot service data, never demo bots. Model tags are reported by local Ollama but do not prove inference. Selecting an assignment creates a review-only plan and cannot switch a running model, spawn a bot, approve actions or execute tools.</p>
+        <div class="crew-tools crew-planner-header"><span id="crew-model-status" class="pill">CHECKING OLLAMA TAGS</span><span id="crew-plan-mode" class="muted small">REVIEW MODE DISABLED</span></div>
         <div id="crew-count" class="crew-count">Checking local service…</div>
         <div id="crew-roster" class="crew-roster" aria-live="polite"><p class="muted small">Loading…</p></div>
+        <p id="crew-plan-status" class="muted small" role="status" aria-live="polite">No assignments proposed.</p>
+        <div id="crew-proposal" class="crew-proposal" aria-live="polite"></div>
         <h3 class="crew-subtitle">Service events <span class="muted small">sanitized, current process only</span></h3>
         <div id="crew-history" class="crew-history" aria-live="polite"><p class="muted small">Loading…</p></div>
       </section>
