@@ -69,7 +69,7 @@ function assertIntent(input: unknown): MarkdownApplyIntent {
     "schema", "draftId", "draftReceiptDigest", "proposalDigest", "repoRoot",
     "commit", "target", "beforeSha256", "afterSha256", "authority",
   ])) throw Error("MARKDOWN_APPLY_INTENT_SCHEMA_INVALID");
-  const v = input as MarkdownApplyIntent;
+  const v = input as unknown as MarkdownApplyIntent;
   if (v.schema !== "phibot.crew.markdown-apply-intent.v1" ||
       typeof v.draftId !== "string" || !UUID.test(v.draftId) ||
       typeof v.draftReceiptDigest !== "string" || !HEX64.test(v.draftReceiptDigest) ||
@@ -214,7 +214,7 @@ export function verifyMarkdownApplyResult(input: unknown): MarkdownApplyResult {
   if (!keys(input, [
     "schema", "id", "appliedAt", "intent", "status", "actualSha256", "receiptDigest",
   ])) throw Error("MARKDOWN_APPLY_RESULT_SCHEMA_INVALID");
-  const r = input as MarkdownApplyResult;
+  const r = input as unknown as MarkdownApplyResult;
   if (r.schema !== "phibot.crew.markdown-apply-result.v1" ||
       typeof r.id !== "string" || !UUID.test(r.id) ||
       typeof r.appliedAt !== "string" || !Number.isFinite(Date.parse(r.appliedAt)) ||
