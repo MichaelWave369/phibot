@@ -43,6 +43,14 @@ export interface CrewTrialReceipt {
   authority:"NO_TOOLS_NO_WRITES_NO_GRANTS";steps:CrewStep[];digest:string;
 }
 export function verifyCrewTrial(value: CrewTrialReceipt): void {
+  if(Object.keys(value).sort().join(",") !== [
+    "schema","id","checkedAt","fixture","model","port","readinessDigest",
+    "status","authority","steps","digest",
+  ].sort().join(",")) throw Error("CREW_RECEIPT_SCHEMA_INVALID");
+  if(!/^[0-9a-f-]{36}$/.test(value.id) ||
+     !Number.isFinite(Date.parse(value.checkedAt)) ||
+     !Number.isInteger(value.port) || value.port<1 || value.port>65535)
+    throw Error("CREW_RECEIPT_ID_INVALID");
   if(value.schema !== "phibot.crew.trial.v1" ||
      !HASH.test(value.digest) || !HASH.test(value.readinessDigest) ||
      !TAG.test(value.model) || !Array.isArray(value.steps) ||
@@ -52,9 +60,11 @@ export function verifyCrewTrial(value: CrewTrialReceipt): void {
      value.fixture!==FIXTURE) throw Error("CREW_RECEIPT_INVALID");
   for(let i=0;i<value.steps.length;i++){
     const s=value.steps[i];
-    if(s?.role!==ROLES[i] || s.stage!==STAGES[i] ||
+    if(Object.keys(s).sort().join(",")!=="confidence,latencyMs,role,stage,summary" ||
+       s?.role!==ROLES[i] || s.stage!==STAGES[i] ||
        typeof s.summary!=="string" || s.summary.length<1 ||
        s.summary.length>240 || /[\u0000-\u001f\u007f]/.test(s.summary) ||
+       !Number.isSafeInteger(s.latencyMs) || s.latencyMs<0 || s.latencyMs>120000 ||
        !Number.isFinite(s.confidence) || s.confidence<0 || s.confidence>1)
       throw Error("CREW_STEP_INVALID");
   }
