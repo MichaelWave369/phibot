@@ -71,7 +71,7 @@ function git(
     maxBuffer: options.maxBuffer ?? 16384,
     encoding: "utf8", stdio: ["pipe", "pipe", "pipe"],
     ...(options.input === undefined ? {} : { input: options.input }),
-  }).trim();
+  }).trimEnd();
 }
 async function canonicalRoot(repoDir: string, allowedRoots: string[]): Promise<string> {
   if (!Array.isArray(allowedRoots) || allowedRoots.length < 1 ||
