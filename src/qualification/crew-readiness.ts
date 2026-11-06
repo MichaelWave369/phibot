@@ -36,6 +36,7 @@ export interface CrewReadinessRecord {
 
 export interface ReadinessDisplay {
   model: string;
+  ollamaPort: number;
   checkedAt: string;
   status: "RECENT_PROBE_PASS_SELF_REPORT" | "FAILED_PROBE" | "STALE_PROBE";
   inferenceLatencyMs: number | null;
@@ -206,6 +207,7 @@ export async function readCrewReadiness({
       const stale = age < 0 || age > AGE_MS;
       return {
         model: r.model,
+        ollamaPort: r.ollamaPort,
         checkedAt: r.checkedAt,
         status: stale ? "STALE_PROBE" as const :
           r.status === "PASS" ? "RECENT_PROBE_PASS_SELF_REPORT" as const :
