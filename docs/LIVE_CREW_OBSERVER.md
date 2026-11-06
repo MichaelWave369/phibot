@@ -13,44 +13,44 @@ The observer does not read durable transcripts, memory, source files, credential
 
 Merge the feature PR after checks and review. In the PhiBot clone run:
 
-\`\`\`powershell
+```powershell
 git pull origin main
 npm.cmd install
 npm.cmd test
-\`\`\`
+```
 
 In **PowerShell terminal A**, explicitly start a service with a known, reviewed local manifest:
 
-\`\`\`powershell
+```powershell
 npm.cmd run service -- --port 7369 --manifest bots/examples/repo-scout.phibot.json
-\`\`\`
+```
 
 In **PowerShell terminal B**, explicitly link the read-only dashboard to that port:
 
-\`\`\`powershell
+```powershell
 $env:PHIBOT_OWNER = 'MichaelWave369'
 $env:PHIBOT_REPO_ALLOWLIST = 'MichaelWave369/phibot'
 $env:PHIBOT_CREW_SERVICE_PORT = '7369'
 npm.cmd run queue:dashboard
-\`\`\`
+```
 
 Open the printed **http://127.0.0.1:43969/** URL. If no service is started, or if the port is omitted, the panel shows **SERVICE NOT CONNECTED** and makes no claim that an agent is live.
 
-**Important:** The \`PHIBOT_CREW_SERVICE_PORT\` value must be a numeric TCP port. The dashboard constructs a fixed \`127.0.0.1\` endpoint and never accepts a user-controlled hostname or path. Only \`GET /bots\` and \`GET /events?limit=24\` are read, with a 2.5s timeout and 128KiB response cap. The endpoint itself is unauthenticated and must never be reverse-proxied or exposed to LAN/Starlink.
+**Important:** The `PHIBOT_CREW_SERVICE_PORT` value must be a numeric TCP port. The dashboard constructs a fixed `127.0.0.1` endpoint and never accepts a user-controlled hostname or path. Only `GET /bots` and `GET /events?limit=24` are read, with a 2.5s timeout and 128KiB response cap. The endpoint itself is unauthenticated and must never be reverse-proxied or exposed to LAN/Starlink.
 
 ## Security and authority
 
-- \`/api/crew\` is **GET-only** and never has an action token or permission-grant path.
+- `/api/crew` is **GET-only** and never has an action token or permission-grant path.
 - No bot creates, starts, stops, or executes as a result of reading this view.
 - Existing PHIBOT-25/26 manual operator controls remain unchanged: view-only by default, and optional **read-only** queue requests only.
-- The browser uses \`textContent\`, never \`innerHTML\`, for external names and event labels. The original Content Security Policy remains enforced.
-- Invalid, oversized, unknown-schema or unreachable service responses fail closed as \`CREW_SERVICE_UNAVAILABLE\` and do not show stale live agents.
-- The service's bot \`state\` is **service-reported**, not independently verified against operating-system processes. Model names are configured, not tested.
+- The browser uses `textContent`, never `innerHTML`, for external names and event labels. The original Content Security Policy remains enforced.
+- Invalid, oversized, unknown-schema or unreachable service responses fail closed as `CREW_SERVICE_UNAVAILABLE` and do not show stale live agents.
+- The service's bot `state` is **service-reported**, not independently verified against operating-system processes. Model names are configured, not tested.
 - This does not prove model quality, provider availability, live inference, Native PhiOS isolation, secure key custody, authenticated multi-user access or computer-use safety.
 
 ## Acceptance
 
-Run \`npm test\` and inspect the localhost interface. Test the offline view without the env var, a valid live service with a registered test manifest, interruption of terminal A, and malformed service JSON. Check that the panel does not change the read-only permission boundary. The automated tests use mock HTTP responses, **not** a qualified Windows field run.
+Run `npm test` and inspect the localhost interface. Test the offline view without the env var, a valid live service with a registered test manifest, interruption of terminal A, and malformed service JSON. Check that the panel does not change the read-only permission boundary. The automated tests use mock HTTP responses, **not** a qualified Windows field run.
 
 ## Next gates
 
