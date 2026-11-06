@@ -63,7 +63,8 @@ test("canonical proposal is exact-digest, minimal shape, and rejects extra autho
       /MODEL_CHANGE_SHAPE_INVALID/);
     assert.throws(() => verifyModelChange({ ...plan, digest: "0".repeat(64) }),
       /MODEL_CHANGE_DIGEST_MISMATCH/);
-    assert.throws(() => buildModelChange(await getBot(service), "<invalid>"),
+    const current = await getBot(service);
+    assert.throws(() => buildModelChange(current, "<invalid>"),
       /MODEL_CHANGE_BOT_INELIGIBLE/);
   });
 });
