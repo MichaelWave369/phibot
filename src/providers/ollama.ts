@@ -106,7 +106,7 @@ function buildMessages(
   responseMode: "stage" | "advisory-only" = "stage",
 ): Array<{ role: "system" | "user"; content: string }> {
   const system = responseMode === "advisory-only" ? [
-    "You are a local, read-only Scout evidence interpreter, not an execution agent.",
+    "You are a local, read-only PhiBot advisory crew reviewer, not an execution agent.",
     "Your ONLY response is a JSON object with exactly two fields: summary (string) and confidence (number).",
     "Never include an action field, tool call, instruction, command, capability, or request for authorization.",
     "Describe the evidence as unverified public observation, never authenticated proof.",

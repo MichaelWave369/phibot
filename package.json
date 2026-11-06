@@ -16,6 +16,8 @@
     "model:apply": "npm run build --silent && node dist/src/model-apply-cli.js",
     "model:qualify": "npm run build --silent && node dist/src/crew-readiness-cli.js probe",
     "model:status": "npm run build --silent && node dist/src/crew-readiness-cli.js list",
+    "crew:trial": "npm run build --silent && node dist/src/crew-trial-cli.js run",
+    "crew:trials": "npm run build --silent && node dist/src/crew-trial-cli.js list",
     "acceptance": "npm run build --silent && node dist/src/acceptance-cli.js",
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
     "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
