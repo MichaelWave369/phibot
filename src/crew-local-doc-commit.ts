@@ -250,8 +250,12 @@ export async function commitLocalDoc(
       "100644 " + blob + " 0\t" + intent.target)
     throw Error("CREW_COMMIT_INDEX_BLOB_MISMATCH");
   if (git(root, ["rev-parse", "HEAD"]) !== intent.oldHead ||
-      branchName(root) !== intent.branch)
-    throw Error("CREW_COMMIT_HEAD_MOVED_BEFORE_COMMIT");
+      branchName(root) !== intent.branch ||
+      git(root, ["status", "--porcelain=v1", "--untracked-files=normal"]) !==
+        "M  " + intent.target ||
+      sha256(await validatedLocalFile(join(root, ...intent.target.split("/")), 6144)) !==
+        intent.expectedSha256)
+    throw Error("CREW_COMMIT_HEAD_OR_WORKTREE_CHANGED_BEFORE_COMMIT");
   const newHead = git(root, ["-c", "commit.gpgsign=false",
     "commit-tree", tree, "-p", intent.oldHead, "-m", intent.message]);
   if (!HEX40.test(newHead)) throw Error("CREW_COMMIT_CREATED_OBJECT_INVALID");
@@ -324,6 +328,11 @@ export async function verifyLocalDocCommit({
   const currentBlob = git(root, ["rev-parse", "HEAD:" + intent.target]);
   if (currentBlob !== result.blob)
     throw Error("CREW_COMMIT_VERIFY_BLOB_MISMATCH");
+  const committedBytes = execFileSync("git", ["-C", root, "cat-file", "blob", currentBlob], {
+    timeout: 5000, maxBuffer: 8192, stdio: ["ignore", "pipe", "ignore"],
+  });
+  if (sha256(committedBytes) !== intent.expectedSha256)
+    throw Error("CREW_COMMIT_VERIFY_COMMITTED_CONTENT_MISMATCH");
   const currentBytes = await validatedLocalFile(
     join(root, ...intent.target.split("/")), 6144,
   );
