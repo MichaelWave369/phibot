@@ -5,6 +5,7 @@
  * scheduler, model call, GitHub mutation, gate approval, or shell execution.
  */
 import { randomBytes } from "node:crypto";
+import { readCrewService } from "./crew-live.mjs";
 import { createServer } from "node:http";
 import { open, readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -134,6 +135,7 @@ function makeReadOnlyExecutor(dir) {
 const assets = new Map([
   ["/", ["text/html; charset=utf-8", "queue-dashboard/index.html"]],
   ["/app.js", ["text/javascript; charset=utf-8", "queue-dashboard/app.js"]],
+  ["/crew.js", ["text/javascript; charset=utf-8", "queue-dashboard/crew.js"]],
   ["/style.css", ["text/css; charset=utf-8", "queue-dashboard/style.css"]],
 ]);
 
@@ -163,6 +165,10 @@ export async function startQueueDashboard({
       if (url === "/api/session")
         return json(res, 200, { actionsEnabled, token: actionsEnabled ? token : null,
           mode: "LOCAL_OPERATOR_SESSION" });
+      if (url === "/api/crew") {
+        try { return json(res, 200, await readCrewService({ env })); }
+        catch { return fixedError(res, 503, "CREW_SERVICE_UNAVAILABLE"); }
+      }
       if (url === "/api/state") {
         try {
           const inventory = await inspectQueue(policy, dir);

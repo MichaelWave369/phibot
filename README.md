@@ -112,6 +112,11 @@ An original React/Vite version of the Mission Control dashboard lives in [`site/
 Intended public URL after merging, enabling **Settings → Pages → Source: GitHub Actions** if needed, and verifying successful deployment: **https://michaelwave369.github.io/phibot/**. See [public showcase deployment and safety guide](docs/PUBLIC_MISSION_CONTROL.md).
 
 
+### PHIBOT-27: live local crew observer
+
+The existing localhost operations dashboard now has an opt-in, read-only **Live Crew** panel connected to an explicitly started PhiBot service. Set `PHIBOT_CREW_SERVICE_PORT` to the separately started service's loopback port to display real registered bots, service-reported run states, configured model names, and sanitized current-process events. It never fabricates live bots, runs tools, changes models, delegates work, or grants permissions. The display is a local service self-report, **not independently attested**. See [the local crew guide](docs/LIVE_CREW_OBSERVER.md).
+
+
 ### PHIBOT-28: operator-only local queue qualification
 
 After completing a real read-only job through the local Mission Control, run `npm run queue:qualify` in the same PhiBot clone and with the same `PHIBOT_REPO_ALLOWLIST`. It validates a completed job and its durable `ENQUEUED → LEASED → OBSERVED` transitions, checks evidence agreement, and saves one non-overwritable metadata-only SHA-256 self-report under ignored `.phibot/work-queue/qualification/`. If multiple jobs are complete, specify `-- create --job <64hex>`. A separate `verify --job <64hex>` checks the receipt's self-hash. This is **local consistency evidence, not independent remote attestation**. No network traffic, GitHub writes, model calls, or schedule is introduced. See [PHIBOT-28 Windows qualification guide](docs/LOCAL_QUEUE_FIELD_QUALIFICATION.md).

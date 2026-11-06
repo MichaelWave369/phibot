@@ -41,10 +41,16 @@ test("default viewer is localhost-bound, read-only, no action token or worker", 
     assert.match(page.headers.get("content-security-policy") || "", /default-src 'none'/);
     const markup = await page.text();
     assert.match(markup, /PHIBOT-26/);
+    assert.match(markup, /Live crew observer/);
     assert.match(markup, /Run one bounded pass/);
     assert.doesNotMatch(markup, /<script[^>]*>[^<]/);
     const js = await fetch(new URL("/app.js", app.url));
     assert.equal(js.status, 200);
+    const crewJs = await fetch(new URL("/crew.js", app.url));
+    assert.equal(crewJs.status, 200);
+    const crew = await (await fetch(new URL("/api/crew", app.url))).json();
+    assert.equal(crew.connected, false);
+    assert.equal(crew.status, "SERVICE_NOT_CONFIGURED");
     const css = await fetch(new URL("/style.css", app.url));
     assert.equal(css.status, 200);
     const session = await (await fetch(new URL("/api/session", app.url))).json();
@@ -58,6 +64,8 @@ test("default viewer is localhost-bound, read-only, no action token or worker", 
     const rejected = await post(app, "/api/run-once", {}, "fake");
     assert.equal(rejected.status, 403);
     assert.equal((await rejected.json()).code, "ACTIONS_DISABLED_BY_DEFAULT");
+    const noCrewWrite = await post(app, "/api/crew", {}, "fake");
+    assert.equal(noCrewWrite.status, 405);
     const forbidden = await fetch(new URL("/api/secrets", app.url));
     assert.equal(forbidden.status, 404);
   });
