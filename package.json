@@ -26,6 +26,8 @@
     "crew:draft:preview": "npm run build --silent && node dist/src/crew-markdown-draft-cli.js preview",
     "crew:draft:record": "npm run build --silent && node dist/src/crew-markdown-draft-cli.js record",
     "crew:drafts": "npm run build --silent && node dist/src/crew-markdown-draft-cli.js list",
+    "crew:apply": "npm run build --silent && node dist/src/crew-markdown-apply-cli.js apply",
+    "crew:apply:verify": "npm run build --silent && node dist/src/crew-markdown-apply-cli.js verify",
     "acceptance": "npm run build --silent && node dist/src/acceptance-cli.js",
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
     "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
