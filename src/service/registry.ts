@@ -121,4 +121,38 @@ export class LocalBotRegistry {
     await atomicWrite(this.path, file);
     return structuredClone(next);
   }
+
+  /** CAS update: only the configured model changes; authority and capabilities are untouched. */
+  async changeModel(
+    botId: string,
+    expected: { provider: string; name: string; updatedAt: string },
+    nextModel: { provider: "ollama"; name: string },
+  ): Promise<RegisteredBot> {
+    const file = await readRegistry(this.path);
+    const index = file.bots.findIndex(item => item.manifest.id === botId);
+    if (index < 0) throw new Error("MODEL_CHANGE_BOT_NOT_FOUND");
+    const current = file.bots[index] as RegisteredBot;
+    if (current.state !== "idle" || current.activeRuns !== 0)
+      throw new Error("MODEL_CHANGE_BOT_NOT_IDLE");
+    if (current.updatedAt !== expected.updatedAt ||
+        current.manifest.model.provider !== expected.provider ||
+        current.manifest.model.name !== expected.name)
+      throw new Error("MODEL_CHANGE_STALE_REVISION");
+    if (current.manifest.model.provider === nextModel.provider &&
+        current.manifest.model.name === nextModel.name)
+      throw new Error("MODEL_CHANGE_NOOP");
+    const revision = new Date(Math.max(this.now(), Date.parse(current.updatedAt) + 1)).toISOString();
+    const changed: RegisteredBot = {
+      ...current,
+      manifest: {
+        ...current.manifest,
+        model: { provider: nextModel.provider, name: nextModel.name },
+      },
+      updatedAt: revision,
+    };
+    file.bots[index] = changed;
+    await atomicWrite(this.path, file);
+    return structuredClone(changed);
+  }
+
 }

@@ -138,6 +138,11 @@ The operator-invoked `npm run learning:ci` command can preview (default) or expl
 
 R3 adds a separate check-run detail verification pass after R2's SHA-bound CI preflight. `npm run learning:review:verify -- ...` previews an unsigned, metadata-only audit by default; `--save` explicitly records a local immutable audit. Two recent audits for distinct failing commit SHAs and check-run IDs may produce a **human-review-only** packet via `npm run learning:review:propose -- <audit-id-1> <audit-id-2>`. **Both verification paths use GitHub; this is not independent cryptographic attestation.** No automatic policy promotion, grants, merges, CI retries, or queue integration. See [R3 review guide](docs/LEARNING_GATE_R3_REVIEW.md).
 
+### PHIBOT-35: explicitly approved live-service model configuration
+
+A new **terminal-only** `npm run model:apply` command can change the configured model of one idle PhiBot under exact SHA-256 digest confirmation. It connects to the existing local PhiBot service, which must explicitly enable a separate authenticated model-control endpoint and independently check that the target Ollama model tag is currently reported. A registry compare-and-swap protects the exact bot revision. **Only manifest.model changes**; no inference, mission execution, bot spawning, Reality Gate grants, GitHub writes, or authority/capability changes occur. Model selection persists in the service registry across ordinary service restarts; replacing existing manifests requires a separate explicit startup flag. See [PHIBOT-35 operator safety guide](docs/GOVERNED_MODEL_SWITCH.md). Windows/Ollama field qualification remains outstanding.
+
+
 ### PHIBOT-34: live crew model and mission planning (review only)
 
 The localhost Crew Observer now shows installed Ollama tags from an explicitly configured local port and lets an operator select a candidate model and mission label for an idle registered bot. With a separate manual planning opt-in, the server builds and rechecks an exact SHA-256 proposal bound to the bot's current model and revision. This is **review only**: no model is switched, no mission is dispatched, no tool or model inference runs, no permission grant is issued and no GitHub write occurs. See [PHIBOT-34 Windows operator guide](docs/CREW_MODEL_PLANNER.md). Model tags are self-reported by Ollama, not verified inference capabilities.

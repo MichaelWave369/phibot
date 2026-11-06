@@ -33,6 +33,7 @@ export type PhiBotServiceEventType =
   | "bot.registered"
   | "bot.unregistered"
   | "bot.state"
+  | "bot.model.changed"
   | "bot.spawned"
   | "bot.dissolved"
   | "run.started"
@@ -70,4 +71,7 @@ export interface PhiBotServiceOptions {
 export interface PhiBotServiceHttpOptions {
   host?: string;
   port?: number;
+  /** Explicit opt-in local control secret; never returned over HTTP. */
+  modelControlToken?: string;
+  ollamaPort?: number;
 }
