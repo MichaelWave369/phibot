@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readdir, readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { OllamaProvider } from "./providers/ollama.js";
 import type { PhiProvider, ProviderRequest } from "./providers/types.js";
@@ -134,4 +134,28 @@ export async function runCrewTrial({
   await writeFile(path,JSON.stringify(record,null,2)+"\n",
     {encoding:"utf8",flag:"wx",mode:0o600});
   return {record,path};
+}
+
+/** Bounded local-only inventory. No inference or network calls. */
+export async function listCrewTrials(dir=crewTrialDir()):Promise<CrewTrialReceipt[]> {
+  let names:string[];
+  try { names=await readdir(dir); }
+  catch (error:unknown) {
+    if(error!==null && typeof error==="object" && "code" in error &&
+       error.code==="ENOENT") return [];
+    throw error;
+  }
+  if(names.length>100 || names.some(name =>
+      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}Z-[0-9a-f-]{36}\\.json$/.test(name)))
+    throw Error("CREW_INVENTORY_INVALID");
+  const result:CrewTrialReceipt[]=[];
+  for(const name of names.sort()) {
+    const path=join(dir,name);
+    if((await stat(path)).size>8192)throw Error("CREW_RECORD_OVERSIZE");
+    const record=JSON.parse(await readFile(path,"utf8")) as CrewTrialReceipt;
+    verifyCrewTrial(record);
+    if(!name.endsWith(record.id+".json"))throw Error("CREW_RECORD_FILENAME_INVALID");
+    result.push(record);
+  }
+  return result.reverse();
 }
