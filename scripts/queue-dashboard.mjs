@@ -6,6 +6,7 @@
  */
 import { randomBytes } from "node:crypto";
 import { readCrewService } from "./crew-live.mjs";
+import { readOllamaModels, buildCrewAssignment, verifyCrewAssignment, validateCrewPlanInput } from "./crew-model-planner.mjs";
 import { createServer } from "node:http";
 import { open, readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -142,6 +143,9 @@ const assets = new Map([
 export async function startQueueDashboard({
   env = process.env, dir = QUEUE_HOME, port,
   actionsEnabled = env.PHIBOT_QUEUE_DASHBOARD_ACTIONS === "1",
+  plannerEnabled = env.PHIBOT_CREW_PLANNER_ACTIONS === "1",
+  readCrew = () => readCrewService({ env }),
+  readModels = () => readOllamaModels({ env }),
   execute,
 } = {}) {
   const policy = queuePolicy(env);
@@ -163,11 +167,16 @@ export async function startQueueDashboard({
       return fixedError(res, 404, "ROUTE_NOT_FOUND");
     if (req.method === "GET") {
       if (url === "/api/session")
-        return json(res, 200, { actionsEnabled, token: actionsEnabled ? token : null,
+        return json(res, 200, { actionsEnabled, plannerEnabled,
+          token: actionsEnabled || plannerEnabled ? token : null,
           mode: "LOCAL_OPERATOR_SESSION" });
       if (url === "/api/crew") {
-        try { return json(res, 200, await readCrewService({ env })); }
+        try { return json(res, 200, await readCrew()); }
         catch { return fixedError(res, 503, "CREW_SERVICE_UNAVAILABLE"); }
+      }
+      if (url === "/api/models") {
+        try { return json(res, 200, await readModels()); }
+        catch { return fixedError(res, 503, "OLLAMA_MODELS_UNAVAILABLE"); }
       }
       if (url === "/api/state") {
         try {
@@ -192,15 +201,25 @@ export async function startQueueDashboard({
       return fixedError(res, 404, "ROUTE_NOT_FOUND");
     }
     if (req.method !== "POST" ||
-        !["/api/enqueue", "/api/run-once"].includes(url))
+        !["/api/enqueue", "/api/run-once", "/api/crew/plan"].includes(url))
       return fixedError(res, 405, "METHOD_NOT_ALLOWED");
-    if (!actionsEnabled) return fixedError(res, 403, "ACTIONS_DISABLED_BY_DEFAULT");
+    if (url === "/api/crew/plan" && !plannerEnabled)
+      return fixedError(res, 403, "CREW_PLANNER_DISABLED_BY_DEFAULT");
+    if (url !== "/api/crew/plan" && !actionsEnabled)
+      return fixedError(res, 403, "ACTIONS_DISABLED_BY_DEFAULT");
     if (!authorizePost(req, origin, token))
       return fixedError(res, 403, "SESSION_OR_ORIGIN_DENIED");
     if (busy) return fixedError(res, 409, "OPERATION_ALREADY_RUNNING");
     busy = true;
     try {
       const input = await readBody(req);
+      if (url === "/api/crew/plan") {
+        const selection = validateCrewPlanInput(input);
+        const [crew, models] = await Promise.all([readCrew(), readModels()]);
+        const plan = buildCrewAssignment({ crew, models, ...selection });
+        const check = verifyCrewAssignment(plan, crew, models);
+        return json(res, 200, { ...plan, verification: check.status });
+      }
       if (url === "/api/run-once") {
         if (Object.keys(input).length !== 0)
           return fixedError(res, 400, "RUN_EXPECTS_EMPTY_INPUT");
