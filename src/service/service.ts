@@ -14,6 +14,7 @@ import {
   FileReplayStore,
 } from "./persistence.js";
 import { LocalBotRegistry } from "./registry.js";
+import { verifyModelChange, type ModelChangeProposal } from "./model-change.js";
 import type {
   PhiBotServiceOptions,
   PhiBotServiceSnapshot,
@@ -35,6 +36,18 @@ export class PhiBotService {
   readonly commonLineTransport: FileCommonLineTransport;
   readonly commonLineGroups: FileCommonLineGroupStore;
   readonly commonLine: CommonLine;
+
+  private mutationTail: Promise<void> = Promise.resolve();
+
+  /** Serialize all service mutations so a run and model switch cannot race. */
+  private async exclusive<T>(work: () => Promise<T>): Promise<T> {
+    const previous = this.mutationTail;
+    let release!: () => void;
+    this.mutationTail = new Promise<void>(resolve => { release = resolve; });
+    await previous;
+    try { return await work(); }
+    finally { release(); }
+  }
 
   private lifecycle: ServiceLifecycle = "stopped";
   private startedAt: string | undefined;
@@ -90,6 +103,7 @@ export class PhiBotService {
   }
 
   async stop(): Promise<void> {
+    return this.exclusive(async () => {
     if (this.lifecycle === "stopped") return;
     if (this.budgets.active().length > 0) {
       throw new Error("Cannot stop PhiBot service while runs are active.");
@@ -99,12 +113,14 @@ export class PhiBotService {
     await this.serviceReceipt("ok", "PhiBot service stopped.", {
       event: "service.stopped",
     });
+      });
   }
 
   async registerBot(
     manifest: PhiBotManifest,
     replace = false,
   ): Promise<void> {
+    return this.exclusive(async () => {
     this.requireRunning();
     const bot = await this.registry.register(manifest, replace);
     this.events.publish("bot.registered", {
@@ -116,9 +132,11 @@ export class PhiBotService {
       botId: bot.manifest.id,
       botVersion: bot.manifest.version,
     });
+      });
   }
 
   async unregisterBot(botId: string): Promise<boolean> {
+    return this.exclusive(async () => {
     this.requireRunning();
     if (this.budgets.active(botId).length > 0) {
       throw new Error(`Cannot unregister bot with active runs: ${botId}`);
@@ -132,12 +150,14 @@ export class PhiBotService {
       });
     }
     return removed;
+      });
   }
 
   async beginRun(
     botId: string,
     runId?: string,
   ): Promise<RunBudgetUsage> {
+    return this.exclusive(async () => {
     this.requireRunning();
     const bot = await this.registry.get(botId);
     if (!bot) throw new Error(`Bot not registered: ${botId}`);
@@ -173,6 +193,7 @@ export class PhiBotService {
       }
       throw error;
     }
+      });
   }
 
   async recordProviderTokens(
@@ -194,6 +215,7 @@ export class PhiBotService {
   }
 
   async finishRun(runId: string): Promise<RunBudgetUsage> {
+    return this.exclusive(async () => {
     this.requireRunning();
     const usage = this.budgets.release(runId);
     const active = this.budgets.active(usage.botId).length;
@@ -211,9 +233,11 @@ export class PhiBotService {
       },
     });
     return usage;
+      });
   }
 
   async disableBot(botId: string): Promise<void> {
+    return this.exclusive(async () => {
     this.requireRunning();
     if (this.budgets.active(botId).length > 0) {
       throw new Error(`Cannot disable bot with active runs: ${botId}`);
@@ -223,14 +247,67 @@ export class PhiBotService {
       botId,
       detail: { state: "disabled" },
     });
+      });
   }
 
   async enableBot(botId: string): Promise<void> {
+    return this.exclusive(async () => {
     this.requireRunning();
     await this.registry.setState(botId, "idle", 0);
     this.events.publish("bot.state", {
       botId,
       detail: { state: "idle" },
+    });
+      });
+  }
+
+  /**
+   * Performs one approved, exact-revision, idle-only configuration switch.
+   * This never executes the model or changes an authority field.
+   */
+  async changeBotModel(untrusted: unknown): Promise<{
+    status: "MODEL_CHANGED_NO_INFERENCE";
+    botId: string;
+    model: { provider: string; name: string };
+    updatedAt: string;
+    digest: string;
+  }> {
+    return this.exclusive(async () => {
+      this.requireRunning();
+      const proposal: ModelChangeProposal = verifyModelChange(untrusted);
+      const current = await this.registry.get(proposal.botId);
+      if (!current) throw new Error("MODEL_CHANGE_BOT_NOT_FOUND");
+      if (this.budgets.active(proposal.botId).length !== 0 ||
+          current.activeRuns !== 0 || current.state !== "idle")
+        throw new Error("MODEL_CHANGE_BOT_NOT_IDLE");
+      if (current.updatedAt !== proposal.current.updatedAt ||
+          current.manifest.model.provider !== proposal.current.provider ||
+          current.manifest.model.name !== proposal.current.name)
+        throw new Error("MODEL_CHANGE_STALE_REVISION");
+      // Durable intent precedes mutation. A post-commit receipt failure must
+      // be investigated from the registry, not blindly retried.
+      await this.serviceReceipt("escalate", "Human model-change intent received.", {
+        event: "bot.model.change.intent", botId: proposal.botId, digest: proposal.digest,
+      });
+      const changed = await this.registry.changeModel(
+        proposal.botId, proposal.current, proposal.candidate,
+      );
+      this.events.publish("bot.model.changed", {
+        botId: proposal.botId,
+        detail: { modelProvider: changed.manifest.model.provider, digest: proposal.digest },
+      });
+      await this.serviceReceipt("ok", "Bot model configuration changed; inference not qualified.", {
+        event: "bot.model.changed", botId: proposal.botId, digest: proposal.digest,
+        modelProvider: changed.manifest.model.provider,
+        updatedAt: changed.updatedAt,
+      });
+      return {
+        status: "MODEL_CHANGED_NO_INFERENCE",
+        botId: proposal.botId,
+        model: structuredClone(changed.manifest.model),
+        updatedAt: changed.updatedAt,
+        digest: proposal.digest,
+      };
     });
   }
 
