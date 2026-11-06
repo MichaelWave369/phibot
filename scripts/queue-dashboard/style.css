@@ -108,4 +108,13 @@ footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid 
 .crew-event{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;overflow-wrap:anywhere}
 .crew-event time{flex-shrink:0}
 @media(max-width:600px){.crew-tools{justify-content:flex-start}.crew-event{align-items:flex-start;flex-direction:column;gap:2px}}
+/* PHIBOT-34: local, review-only model / crew planning */
+.crew-planner-header{margin:16px 0}
+.crew-picker{display:grid;grid-template-columns:1fr;gap:2px;margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.crew-picker label{margin:8px 0 0}
+.crew-picker .button{margin-top:10px}
+.crew-proposal{border:1px solid var(--line);background:#0c1420;border-radius:12px;padding:16px;overflow-wrap:anywhere}
+.crew-proposal:empty{display:none}
+.crew-proposal p{font-size:12px;margin:8px 0}
+.crew-proposal strong{font-size:12px;color:var(--cyan)}
 @media(prefers-reduced-motion:reduce){.button{transition:none}.button:hover:not(:disabled){transform:none}}
