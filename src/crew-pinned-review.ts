@@ -93,16 +93,17 @@ function decodeStage(raw: unknown, model: string, role: string, stage: string): 
   if (!hasKeys(payload, ["summary", "confidence"]))
     throw Error("CREW_PINNED_OUTPUT_SHAPE_INVALID");
   const v = payload as Record<string, unknown>;
+  const latency = raw.metrics.latencyMs;
   if (typeof v.summary !== "string" || v.summary.length < 1 || v.summary.length > 240 ||
       /[\u0000-\u001f\u007f]/.test(v.summary) ||
       typeof v.confidence !== "number" || !Number.isFinite(v.confidence) ||
       v.confidence < 0 || v.confidence > 1 ||
-      !Number.isSafeInteger(raw.metrics.latencyMs) || raw.metrics.latencyMs < 0 ||
-      raw.metrics.latencyMs > 120000 ||
+      typeof latency !== "number" || !Number.isSafeInteger(latency) || latency < 0 ||
+      latency > 120000 ||
       (raw.metrics.attempts !== undefined && raw.metrics.attempts !== 1))
     throw Error("CREW_PINNED_OUTPUT_INVALID");
   return { role, stage, summary: v.summary, confidence: v.confidence,
-    latencyMs: raw.metrics.latencyMs as number };
+    latencyMs: latency };
 }
 export function verifyPinnedReview(input: unknown): PinnedReviewReceipt {
   if (!hasKeys(input, ["schema", "id", "checkedAt", "source", "model", "port",
@@ -129,7 +130,7 @@ export function verifyPinnedReview(input: unknown): PinnedReviewReceipt {
       !Number.isInteger(s.bytes) || s.bytes < 1 || s.bytes > 6144)
     throw Error("CREW_PINNED_SOURCE_INVALID");
   for (let i = 0; i < v.stages.length; i++) {
-    const step = v.stages[i];
+    const step = v.stages[i]!;
     if (!hasKeys(step, ["role", "stage", "summary", "confidence", "latencyMs"]) ||
         step.role !== ROLES[i] || step.stage !== STAGES[i] ||
         typeof step.summary !== "string" || step.summary.length < 1 ||
