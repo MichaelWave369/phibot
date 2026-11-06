@@ -146,7 +146,7 @@ export async function listCrewTrials(dir=crewTrialDir()):Promise<CrewTrialReceip
     throw error;
   }
   if(names.length>100 || names.some(name =>
-      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}Z-[0-9a-f-]{36}\\.json$/.test(name)))
+      !/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[0-9a-f-]{36}\.json$/.test(name)))
     throw Error("CREW_INVENTORY_INVALID");
   const result:CrewTrialReceipt[]=[];
   for(const name of names.sort()) {
