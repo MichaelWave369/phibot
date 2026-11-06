@@ -7,6 +7,7 @@
   <title>PhiBot / Local Operations</title>
   <link rel="stylesheet" href="/style.css"/>
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/crew.js"></script>
 </head>
 <body>
   <div class="orb orb-a" aria-hidden="true"></div>
@@ -19,7 +20,7 @@
       </a>
       <div class="top-right">
         <span id="conn" class="connection">LOCAL • CONNECTING</span>
-        <span class="version">PHIBOT-26</span>
+        <span class="version">PHIBOT-26 / 27</span>
       </div>
     </header>
     <main>
@@ -55,6 +56,20 @@
           <strong id="attention">–</strong>
           <small>Leased or exhausted</small>
         </article>
+      </section>
+      <section class="panel crew-panel" aria-label="Live crew from separately started PhiBot service">
+        <div class="panel-header">
+          <div><div class="eyebrow">PHIBOT-27 / LOCAL CREW</div><h2>Live crew observer</h2></div>
+          <div class="crew-tools">
+            <span id="crew-status" class="pill" role="status" aria-live="polite">CONNECTING</span>
+            <button id="crew-refresh" class="button secondary small" type="button">Refresh crew</button>
+          </div>
+        </div>
+        <p class="muted small">Only explicitly connected local PhiBot service data, never demo bots. Model names are configured values, not verified inference. This view cannot change a model, spawn a bot, approve actions or execute tools.</p>
+        <div id="crew-count" class="crew-count">Checking local service…</div>
+        <div id="crew-roster" class="crew-roster" aria-live="polite"><p class="muted small">Loading…</p></div>
+        <h3 class="crew-subtitle">Service events <span class="muted small">sanitized, current process only</span></h3>
+        <div id="crew-history" class="crew-history" aria-live="polite"><p class="muted small">Loading…</p></div>
       </section>
       <div class="workspace">
         <div class="maincolumn">
