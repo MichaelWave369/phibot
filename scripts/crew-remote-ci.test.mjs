@@ -211,8 +211,9 @@ test("local receipt tampering or forged merge authority fails verification",asyn
       ...saved,
       mergeAuthorized:true,
     }),/CREW_CI_RECEIPT_SCHEMA_INVALID/);
+    const persisted=(await listRemoteCI(temp))[0];
     assert.throws(()=>verifyRemoteCIReceipt({
-      ...((await listRemoteCI(temp))[0]),
+      ...persisted,
       observation:{...saved.observation,mergeAuthorized:true},
     }),/CREW_CI_RECEIPT_OBSERVATION_INVALID/);
     const original=JSON.parse(await readFile(saved.path,"utf8"));
