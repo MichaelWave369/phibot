@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-39: Human-reviewed, source-pinned local advisory handoff
+
+After a complete PHIBOT-38 review, operators can preview an exact, source-hashed Scout/Patch/Skeptic proposal with `npm run crew:handoff:preview -- --review <uuid> --repo .`. A separate interactive `crew:handoff:review` action requires a typed SHA-256 digest prefix and stores one immutable local human-reviewed advisory packet per source review. Source blob/hash, current HEAD and target clean-state are rechecked; no executable patch, code write, GitHub call or Reality Gate grant is created. See [PHIBOT-39 field guide](docs/CREW_REVIEW_HANDOFF.md).
+
 ## PHIBOT-38: Read-only source-pinned crew review
 
 An explicit local `crew:pinned` command lets Scout, Patch and Skeptic inspect one allowlisted Markdown file from an exact local Git commit SHA, with blob and SHA-256 evidence. It requires a recent matching local model-readiness receipt and uses three separate bounded advisory Ollama calls. No role gets tool permissions, repository write access, model-changing authority or permission to merge. Outputs are **unverified human-review suggestions**, not proof or approved repairs. See [the PHIBOT-38 operator guide](docs/CREW_PINNED_REVIEW.md).
