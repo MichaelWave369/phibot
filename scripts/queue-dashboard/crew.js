@@ -130,7 +130,8 @@ async function refreshCrew() {
   }
 }
 async function refreshAll() {
-  await Promise.all([refreshModels(), refreshCrew()]);
+  await refreshModels();
+  await refreshCrew();
 }
 async function propose(botId, modelName, mission) {
   if (!plannerEnabled || !plannerToken || planning || !modelName) return;
