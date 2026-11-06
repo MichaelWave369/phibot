@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-38: Read-only source-pinned crew review
+
+An explicit local `crew:pinned` command lets Scout, Patch and Skeptic inspect one allowlisted Markdown file from an exact local Git commit SHA, with blob and SHA-256 evidence. It requires a recent matching local model-readiness receipt and uses three separate bounded advisory Ollama calls. No role gets tool permissions, repository write access, model-changing authority or permission to merge. Outputs are **unverified human-review suggestions**, not proof or approved repairs. See [the PHIBOT-38 operator guide](docs/CREW_PINNED_REVIEW.md).
+
 ## PHIBOT-17 R2: opt-in PocketBrain Tiny browser qualification lab
 
 The old unmergeable PR #23 is being replaced with a self-contained, review-only browser lab: two serial Scout/Skeptic advisory sessions on one explicitly loaded local Tiny model and a completely synthetic market fixture. First-party SDK source is vendored in this repository; external model/runtime downloads require a separate human click and are not yet content-attested. No trades, real prices, GitHub writes, bot spawning or auto-merge. On successful GitHub Pages deployment, try [/phibot/market-lab/](https://michaelwave369.github.io/phibot/market-lab/) without a local installation. See [the R2 review and acceptance guide](docs/POCKETBRAIN_BROWSER_HOST_R2.md). The public Mission Control remains a separate simulation.
