@@ -15,7 +15,8 @@ const env = {
 
 async function setup(options, fn) {
   const dir = await mkdtemp(join(tmpdir(), "phibot-ops-test-"));
-  const app = await startQueueDashboard({ env, port: 0, dir, ...options });
+  const app = await startQueueDashboard({ env, port: 0, dir,
+    readinessDir: join(dir, "crew-readiness"), ...options });
   try { await fn(app); } finally {
     await app.close(); await rm(dir, { recursive: true, force: true });
   }
@@ -48,6 +49,11 @@ test("default viewer is localhost-bound, read-only, no action token or worker", 
     assert.equal(js.status, 200);
     const crewJs = await fetch(new URL("/crew.js", app.url));
     assert.equal(crewJs.status, 200);
+    const readinessResponse = await fetch(new URL("/api/readiness", app.url));
+    assert.equal(readinessResponse.status, 200);
+    const evidence = await readinessResponse.json();
+    assert.equal(evidence.schema, "phibot.crew.readiness-view.v1");
+    assert.deepEqual(evidence.records, []);
     const crew = await (await fetch(new URL("/api/crew", app.url))).json();
     assert.equal(crew.connected, false);
     assert.equal(crew.status, "SERVICE_NOT_CONFIGURED");
@@ -66,6 +72,8 @@ test("default viewer is localhost-bound, read-only, no action token or worker", 
     assert.equal((await rejected.json()).code, "ACTIONS_DISABLED_BY_DEFAULT");
     const noCrewWrite = await post(app, "/api/crew", {}, "fake");
     assert.equal(noCrewWrite.status, 405);
+    const noProbePost = await post(app, "/api/readiness", {}, "fake");
+    assert.equal(noProbePost.status, 405);
     const forbidden = await fetch(new URL("/api/secrets", app.url));
     assert.equal(forbidden.status, 404);
   });
