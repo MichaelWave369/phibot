@@ -92,4 +92,20 @@ footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid 
 @media(max-width:1080px){.workspace{grid-template-columns:minmax(0,1.2fr) minmax(270px,1fr)}.panel{padding:20px}}
 @media(max-width:800px){.workspace{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.intro{padding-top:42px}}
 @media(max-width:480px){.metrics{gap:9px}.metric{padding:18px;min-height:126px}.metric strong{font-size:30px}.topbar{height:72px}.top-right{gap:7px}.version{display:none}.panel{padding:18px}.panel-header{align-items:flex-start;flex-direction:column}.event{grid-template-columns:18px 1fr}.event time{grid-column:2}.mark{font-size:15px}.connection{font-size:9px}}
+/* PHIBOT-27: read-only local crew surface */
+.crew-panel{margin:8px 0 22px}
+.crew-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.crew-panel>p{margin-top:-5px;max-width:850px}
+.crew-count{font-size:12px;color:var(--muted);margin:18px 0 10px}
+.crew-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.crew-card{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:15px;min-width:0}
+.crew-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.crew-card-head strong{overflow-wrap:anywhere}
+.crew-card p{margin:7px 0 0;overflow-wrap:anywhere}
+.crew-model{font-size:12px;color:var(--cyan);overflow-wrap:anywhere}
+.crew-subtitle{font-size:14px;margin:24px 0 9px}
+.crew-history{max-height:220px;overflow:auto;border-top:1px solid var(--line)}
+.crew-event{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;overflow-wrap:anywhere}
+.crew-event time{flex-shrink:0}
+@media(max-width:600px){.crew-tools{justify-content:flex-start}.crew-event{align-items:flex-start;flex-direction:column;gap:2px}}
 @media(prefers-reduced-motion:reduce){.button{transition:none}.button:hover:not(:disabled){transform:none}}
