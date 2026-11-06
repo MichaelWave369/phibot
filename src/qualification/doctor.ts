@@ -14,6 +14,8 @@ export interface QualificationDoctorOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   inferenceTimeoutMs?: number;
+  /** Enforce exact model echoed by Ollama; opt-in for crew evidence. */
+  strictModelIdentity?: boolean;
   now?: () => number;
 }
 
@@ -240,6 +242,7 @@ export async function runQualificationDoctor(
       keepAlive: "10m",
       numPredict: 160,
       repeatRecovery: true,
+      requireModelEcho: options.strictModelIdentity ?? false,
     });
 
     try {
