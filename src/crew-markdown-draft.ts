@@ -81,7 +81,7 @@ export function markdownDiff(path: string, original: string, replacement: string
   if (Math.max(removed.length, added.length) > 16)
     throw Error("CREW_DRAFT_CHANGED_LINES_EXCEEDED");
   const leftContext = a.slice(Math.max(0, prefix - 2), prefix);
-  const rightContext = suffix ? a.slice(a.length - Math.min(2, suffix)) : [];
+  const rightContext = suffix ? a.slice(a.length - suffix, a.length - suffix + Math.min(2, suffix)) : [];
   const start = prefix - leftContext.length + 1;
   const oldCount = leftContext.length + removed.length + rightContext.length;
   const newCount = leftContext.length + added.length + rightContext.length;
@@ -135,7 +135,7 @@ export function verifyMarkdownDraftProposal(input: unknown): MarkdownDraftPropos
       !fields(p.source, ["repository", "commit", "path", "blobSha", "sha256", "bytes", "trust"]) ||
       !/^[a-f0-9]{40}$/.test(p.source.commit) ||
       !/^[a-f0-9]{40}$/.test(p.source.blobSha) ||
-      !SHA.test(p.source.sha256) ||
+      typeof p.source.sha256 !== "string" || !SHA.test(p.source.sha256) ||
       !/^[A-Za-z0-9_.-]{1,100}$/.test(p.source.repository) ||
       !/^(?:README\.md|docs\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\.md)$/.test(p.source.path) ||
       p.source.trust !== "LOCAL_GIT_COMMIT_NOT_REMOTE_ATTESTED" ||
