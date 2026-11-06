@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-41: Explicit Reality Gate for one local Markdown edit
+
+An operator can now take a **previously human-reviewed and checksum-recorded PHIBOT-40 Markdown draft** and, in an interactive local terminal only, authorize one exact **working-tree replacement** through PhiBot's existing one-use Reality Gate. The capability is registered only for this CLI, never as a normal bot tool or server endpoint. The target repository, commit, file, diff and before/after SHA-256 are revalidated; the operator must type `APPLY <Reality-Gate-digest-prefix>`. `crew:apply:verify` independently checks the actual bytes and uncommitted Git state. **No git add/commit/push, PR, merge, CI success, model inference or deploy** results from this operation. See [PHIBOT-41 local operator guide](docs/CREW_MARKDOWN_APPLY.md).
+
 ## PHIBOT-40: Exact Markdown draft, no write authority
 
 A human can turn an acknowledged PHIBOT-39 crew handoff into a **precise Markdown replacement proposal**. The local `crew:draft:preview` command reads an operator-edited candidate from ignored `.phibot/crew-drafts/`, rechecks the reviewed Git commit and target hash, and shows a bounded diff. A separate interactive `crew:draft:record` action requires a typed digest and stores one tamper-evident, inert proposal per handoff. **No repository file is edited, and the existing Reality Gate source-repair tool does not accept this Markdown packet.** A future, separate human-gated path is required before any actual write. See [PHIBOT-40 operator guide](docs/CREW_MARKDOWN_DRAFT.md).
