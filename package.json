@@ -28,6 +28,8 @@
     "crew:drafts": "npm run build --silent && node dist/src/crew-markdown-draft-cli.js list",
     "crew:apply": "npm run build --silent && node dist/src/crew-markdown-apply-cli.js apply",
     "crew:apply:verify": "npm run build --silent && node dist/src/crew-markdown-apply-cli.js verify",
+    "crew:commit": "npm run build --silent && node dist/src/crew-local-doc-commit-cli.js commit",
+    "crew:commit:verify": "npm run build --silent && node dist/src/crew-local-doc-commit-cli.js verify",
     "acceptance": "npm run build --silent && node dist/src/acceptance-cli.js",
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
     "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
