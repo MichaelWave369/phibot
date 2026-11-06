@@ -110,16 +110,21 @@ export function verifyPinnedReview(input: unknown): PinnedReviewReceipt {
     "readinessDigest", "classification", "status", "authority", "stages", "digest"]))
     throw Error("CREW_PINNED_RECEIPT_SCHEMA_INVALID");
   const v = input as PinnedReviewReceipt;
-  if (v.schema !== "phibot.crew.pinned-review.v1" || !UUID.test(v.id) ||
-      !Number.isFinite(Date.parse(v.checkedAt)) ||
-      typeof v.model !== "string" || !MODEL.test(v.model) ||
-      !Number.isInteger(v.port) || v.port < 1 || v.port > 65535 ||
-      typeof v.readinessDigest !== "string" || !SHA.test(v.readinessDigest) ||
-      v.classification !== SOURCE || v.authority !== AUTHORITY ||
-      !["THREE_ADVISORIES_UNVERIFIED", "FAILED_INCOMPLETE_NO_APPROVAL"].includes(v.status) ||
-      !Array.isArray(v.stages) || v.stages.length > 3 ||
-      (v.status === "THREE_ADVISORIES_UNVERIFIED") !== (v.stages.length === 3))
-    throw Error("CREW_PINNED_RECEIPT_INVALID");
+  const invalid = {
+    schema: v.schema !== "phibot.crew.pinned-review.v1",
+    id: !UUID.test(v.id),
+    date: !Number.isFinite(Date.parse(v.checkedAt)),
+    model: typeof v.model !== "string" || !MODEL.test(v.model),
+    port: !Number.isInteger(v.port) || v.port < 1 || v.port > 65535,
+    readiness: typeof v.readinessDigest !== "string" || !SHA.test(v.readinessDigest),
+    classification: v.classification !== SOURCE,
+    authority: v.authority !== AUTHORITY,
+    status: !["THREE_ADVISORIES_UNVERIFIED", "FAILED_INCOMPLETE_NO_APPROVAL"].includes(v.status),
+    stages: !Array.isArray(v.stages) || v.stages.length > 3,
+    completeness: (v.status === "THREE_ADVISORIES_UNVERIFIED") !== (v.stages.length === 3),
+  };
+  const bad = Object.entries(invalid).filter(([,v]) => v).map(([k]) => k);
+  if (bad.length) throw Error("CREW_PINNED_RECEIPT_INVALID_" + bad.join("_"));
   const s = v.source;
   if (!hasKeys(s, ["repository", "commit", "path", "blobSha", "sha256", "bytes", "trust"]) ||
       s.trust !== "LOCAL_GIT_COMMIT_NOT_REMOTE_ATTESTED" ||
