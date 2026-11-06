@@ -13,6 +13,7 @@
     "phibot": "npm run build --silent && node dist/src/cli.js",
     "tool": "npm run build --silent && node dist/src/tool-cli.js",
     "service": "npm run build --silent && node dist/src/service-cli.js",
+    "model:apply": "npm run build --silent && node dist/src/model-apply-cli.js",
     "acceptance": "npm run build --silent && node dist/src/acceptance-cli.js",
     "qualify": "npm run build --silent && node dist/src/qualification-cli.js",
     "qualify:doctor": "npm run build --silent && node dist/src/qualification-doctor-cli.js",
