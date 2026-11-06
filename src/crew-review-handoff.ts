@@ -187,7 +187,8 @@ export async function acknowledgeReviewHandoff({
   };
   const record = verifyHandoffReceipt({ ...base, digest: digest(base) });
   await mkdir(dir, { recursive: true, mode: 0o700 });
-  const path = join(dir, record.id + ".json");
+  // One immutable acknowledgement per underlying source-pinned review ID.
+  const path = join(dir, record.proposal.reviewId + ".json");
   await writeFile(path, JSON.stringify(record, null, 2) + "\n", {
     encoding: "utf8", flag: "wx", mode: 0o600,
   });
@@ -208,7 +209,7 @@ export async function listReviewHandoffs(dir = handoffDir()): Promise<ReviewHand
     const path = join(dir, name);
     if ((await stat(path)).size > 8192) throw Error("CREW_HANDOFF_FILE_OVERSIZE");
     const record = verifyHandoffReceipt(JSON.parse(await readFile(path, "utf8")) as unknown);
-    if (name !== record.id + ".json") throw Error("CREW_HANDOFF_FILENAME_INVALID");
+    if (name !== record.proposal.reviewId + ".json") throw Error("CREW_HANDOFF_FILENAME_INVALID");
     results.push(record);
   }
   return results.reverse();
