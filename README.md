@@ -4,6 +4,10 @@
 
 The Rung 0-7 architecture is complete. Current work is target-machine field qualification.
 
+## PHIBOT-43: Exact-commit GitHub CI evidence, never merge permission
+
+The new operator command `npm run crew:ci:read -- --draft <uuid> --repo . --remote MichaelWave369/phibot` **re-verifies the PHIBOT-42 local commit**, then uses GitHub read-only calls to confirm the allowlisted remote branch still points to the **exact same SHA**. It inspects the latest matching GitHub Actions `CI` workflow and `test` job, distinguishes pass/fail/pending/missing evidence, and saves a local, self-hashed observation receipt. `crew:ci:list` displays prior receipts. **No push, PR, CI trigger, merge, deploy or new grant** is performed. PhiBot's current CI runs on `main` pushes or pull requests, so a documentation-branch push alone may not produce CI. See [PHIBOT-43 operator guide](docs/CREW_REMOTE_CI_EVIDENCE.md).
+
 ## PHIBOT-42: Human-gated local Git commit, no remote action
 
 A PHIBOT-41 verified Markdown working-tree edit can now be staged and **committed locally** with a **new one-use Reality Gate grant** through the separate interactive `crew:commit` CLI. It only operates on an explicit `phibot/docs-...` branch, refuses unrelated or staged content, validates the exact approved file hash, commits precisely one path, and updates the local branch using compare-and-swap. `crew:commit:verify` independently checks the parent/commit/tree/blob and filesystem SHA-256. This capability is **not registered for bots or servers**, and **does not push, open a PR, run GitHub CI, deploy, or merge**. See [PHIBOT-42 operator guide](docs/CREW_LOCAL_DOC_COMMIT.md).
