@@ -15,6 +15,7 @@ function renderCrew(data) {
   history.replaceChildren();
   if (!data.connected) {
     status.textContent = "SERVICE NOT CONNECTED";
+    byId("crew-count").textContent = "Not connected";
     roster.append(node("p", "muted small",
       "No live service linked. Start PhiBot service separately, then configure PHIBOT_CREW_SERVICE_PORT."));
     history.append(node("p", "muted small", "No live service events available."));
