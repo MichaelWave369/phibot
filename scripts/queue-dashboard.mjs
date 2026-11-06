@@ -218,7 +218,7 @@ export async function startQueueDashboard({
         const [crew, models] = await Promise.all([readCrew(), readModels()]);
         const plan = buildCrewAssignment({ crew, models, ...selection });
         const check = verifyCrewAssignment(plan, crew, models);
-        return json(res, 200, { ...plan, verification: check.status });
+        return json(res, 200, { plan, recheck: check.status });
       }
       if (url === "/api/run-once") {
         if (Object.keys(input).length !== 0)
