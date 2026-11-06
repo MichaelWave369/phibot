@@ -84,7 +84,7 @@ async function main(): Promise<void> {
   const server = await startPhiBotHttpServer(service, {
     ...(args.host === undefined ? {} : { host: args.host }),
     ...(args.port === undefined ? {} : { port: args.port }),
-    ...(controlEnabled ? { modelControlToken: controlToken,
+    ...(controlEnabled ? { modelControlToken: controlToken!,
       ollamaPort: Number(ollamaPortRaw) } : {}),
   });
 
