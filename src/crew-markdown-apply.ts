@@ -25,7 +25,7 @@ const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const hash = (v: string | Buffer) => createHash("sha256").update(v).digest("hex");
 const isObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
-const keys = (v: unknown, names: string[]) =>
+const keys = (v: unknown, names: string[]): v is Record<string, unknown> =>
   isObject(v) && Object.keys(v).sort().join(",") === [...names].sort().join(",");
 
 export interface MarkdownApplyIntent {
