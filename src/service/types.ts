@@ -33,6 +33,7 @@ export type PhiBotServiceEventType =
   | "bot.registered"
   | "bot.unregistered"
   | "bot.state"
+  | "bot.model.changed"
   | "bot.spawned"
   | "bot.dissolved"
   | "run.started"
